@@ -1,7 +1,7 @@
 Meltdown (Markdown Extra Live Toolbox)
 ======================================
 
-A JQuery plugin that adds Markdown Extra live previews, and a toolbar for common markdown actions. **Check out the [project page](http://ian.ahands.org/meltdown/) for a live demo**
+A JQuery plugin that adds Markdown Extra live previews, and a toolbar for common markdown actions. **Check out the [project page](http://iphands.github.com/Meltdown/) for a live demo**
 
 ##Usage
 ###Simple, standard, awesome
