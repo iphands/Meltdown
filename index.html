@@ -3,10 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Meltdown by iphands</title>
-
+    <title>Meltdown by iphands and markcaron</title>
+    <link href="https://raw.github.com/iphands/Meltdown/master/css/meltdown.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/iphands/Meltdown/master/js/jquery.meltdown.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/iphands/Meltdown/master/js/lib/js-markdown-extra.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/iphands/Meltdown/master/js/lib/textinputs_jquery.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -17,10 +22,7 @@
       <header>
         <h1>Meltdown</h1>
         <p>Meltdown (Markdown Extra Live Toolbox): A JQuery plugin that adds Markdown Extra live previews, and a toolbar for common markdown actions.</p>
-
         <p class="view"><a href="https://github.com/iphands/Meltdown">View the Project on GitHub <small>iphands/Meltdown</small></a></p>
-
-
         <ul>
           <li><a href="https://github.com/iphands/Meltdown/zipball/master">Download <strong>ZIP File</strong></a></li>
           <li><a href="https://github.com/iphands/Meltdown/tarball/master">Download <strong>TAR Ball</strong></a></li>
@@ -28,20 +30,20 @@
         </ul>
       </header>
       <section>
-        <h1>Meltdown (Markdown Extra Live Toolbox)</h1>
+	    <textarea rows="18" cols="60" class="foo">
+Meltdown (Markdown Extra Live Toolbox)
+======================================
 
-<p>A JQuery plugin that adds Markdown Extra live previews, and a toolbar for common markdown actions.</p>
+A JQuery plugin that adds Markdown Extra live previews, and a toolbar for common markdown actions.
 
-<h2>Usage</h2>
-
-<h3>Simple, standard, awesome</h3>
-
-<pre><code>jQuery('some_selector').meltdown();
-</code></pre>
-
-<h3>Advanced, changing the preview slider timeout and adding an example widget, still awesome</h3>
-
-<pre><code>jQuery('some_selector').meltdown({
+##Usage
+###Simple, standard, awesome
+~~~
+jQuery('some_selector').meltdown();
+~~~
+###Advanced, changing the preview slider timeout and adding an example widget, still awesome
+~~~
+jQuery('some_selector').meltdown({
   previewTimeout: 4000,
   examples['test'] = {
     label: "Test",
@@ -49,22 +51,23 @@
     markdown: "this is a test"
   }
 });
-</code></pre>
+~~~
 
-<h2>Libraries that Meltdown uses</h2>
+##Libraries that Meltdown uses
+* [jQuery](http://jquery.com/)
+* [jQuery UI](http://jqueryui.com/) [1]
+* [js-markdown-extra](https://github.com/tanakahisateru/js-markdown-extra "Github link to js-markdown-extra")
+* [rangyinputs](http://code.google.com/p/rangyinputs/ "Google code link to rangyinputs") [1]
 
-<ul>
-<li><a href="http://jquery.com/">jQuery</a></li>
-<li>
-<a href="http://jqueryui.com/">jQuery UI</a> [1]</li>
-<li><a href="https://github.com/tanakahisateru/js-markdown-extra" title="Github link to js-markdown-extra">js-markdown-extra</a></li>
-<li>
-<a href="http://code.google.com/p/rangyinputs/" title="Google code link to rangyinputs">rangyinputs</a> [1]</li>
-</ul><p>[1] jQuery UI and rangyinputs are optional. For now Meltdown will still function without these plugins.</p>
+[1] jQuery UI and rangyinputs are optional. For now Meltdown will still function without these plugins.
 
-<h2>License</h2>
-
-<p>Copyright (c) 2013 Ian Page Hands and Mark Caron Dual licensed under the GPLv3 license.</p>
+##License
+Copyright (c) 2013 Ian Page Hands and Mark Caron. Licensed under the GPLv3 license.
+		</textarea>
+		<script type="text/javascript">
+		  jQuery('.foo').meltdown();
+		  setTimeout('jQuery(".meltdown_control-preview").click();', 500);
+		</script>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/iphands">iphands</a></p>
@@ -72,6 +75,5 @@
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
   </body>
 </html>
