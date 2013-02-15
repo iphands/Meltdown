@@ -29,4 +29,4 @@ jQuery('some_selector').meltdown({
 [1] jQuery UI and rangyinputs are optional. For now Meltdown will still function without these plugins.
 
 ##License
-Copyright (c) 2013 Ian Page Hands and Mark Caron Dual licensed under the GPLv3 license.
+Copyright (c) 2013 Ian Page Hands and Mark Caron. Licensed under the GPLv3 license.
