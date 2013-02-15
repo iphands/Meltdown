@@ -1,0 +1,357 @@
+/* Meltdown Wrap
+=======================================================================*/
+
+.meltdown_wrap {
+	position: relative;
+	margin-bottom: 10px;
+	padding: 5px;
+	background: #c8c8c8;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+}
+
+/* Meltdown Font Icons
+=======================================================================*/
+
+@font-face {
+	font-family: 'meltdown';
+	src:url('../fonts/meltdown.eot');
+	src:url('../fonts/meltdown.eot?#iefix') format('embedded-opentype'),
+		url('../fonts/meltdown.woff') format('woff'),
+		url('../fonts/meltdown.ttf') format('truetype'),
+		url('../fonts/meltdown.svg#meltdown') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+/* Use the following CSS code if you want to use data attributes for inserting your icons */
+[data-icon]:before {
+	font-family: 'meltdown';
+	content: attr(data-icon);
+	speak: none;
+	font-weight: normal;
+	line-height: 1;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Use the following CSS code if you want to have a class per icon */
+/*
+Instead of a list of all class selectors,
+you can use the generic selector below, but it's slower:
+[class*="meltdown-icon-"]:before {
+*/
+.meltdown-icon-eye-open:before, .meltdown-icon-eye-close:before, .meltdown-icon-table:before, .meltdown-icon-bold:before, .meltdown-icon-italic:before, .meltdown-icon-list-ol:before, .meltdown-icon-list-ul:before, .meltdown-icon-link:before, .meltdown-icon-code:before, .meltdown-icon-picture:before, .meltdown-icon-quote:before, .meltdown-icon-help:before, .meltdown-icon-code-block:before, .meltdown-icon-return:before, .meltdown-icon-footnote:before, .meltdown-icon-hr:before, .meltdown-icon-caret-down:before, .meltdown-icon-add-to-list:before {
+	font-family: 'meltdown';
+	speak: none;
+	font-style: normal;
+	font-weight: normal;
+	line-height: 1;
+	-webkit-font-smoothing: antialiased;
+}
+.meltdown-icon-eye-open:before {
+	content: "\73";
+}
+.meltdown-icon-eye-close:before {
+	content: "\68";
+}
+.meltdown-icon-table:before {
+	content: "\74";
+}
+.meltdown-icon-bold:before {
+	content: "\62";
+}
+.meltdown-icon-italic:before {
+	content: "\69";
+}
+.meltdown-icon-list-ol:before {
+	content: "\31";
+}
+.meltdown-icon-list-ul:before {
+	content: "\2a";
+}
+.meltdown-icon-link:before {
+	content: "\6c";
+}
+.meltdown-icon-code:before {
+	content: "\3c";
+}
+.meltdown-icon-picture:before {
+	content: "\70";
+}
+.meltdown-icon-quote:before {
+	content: "\22";
+}
+.meltdown-icon-help:before {
+	content: "\3f";
+}
+.meltdown-icon-code-block:before {
+	content: "\5b";
+}
+.meltdown-icon-return:before {
+	content: "\72";
+}
+.meltdown-icon-footnote:before {
+	content: "\66";
+}
+.meltdown-icon-hr:before {
+	content: "\5f";
+}
+.meltdown-icon-caret-down:before {
+	content: "\76";
+}
+.meltdown-icon-add-to-list:before {
+	content: "\2b";
+}
+
+/* Meltdown Toolbar
+=======================================================================*/
+
+.meltdown_bar {
+	position: relative;
+	padding: 5px 0;
+	margin: 0 0 3px;
+	height: 24px;
+	border: 1px solid #a8a8a8;
+	background: #fff; /* Old browsers */
+	background: -moz-linear-gradient(top, #ffffff 0%, #e5e5e5 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#e5e5e5)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ffffff 0%,#e5e5e5 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #ffffff 0%,#e5e5e5 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #ffffff 0%,#e5e5e5 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#e5e5e5',GradientType=0 ); /* IE6-9 */
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+ul.meltdown_controls {
+	float: left;
+	width: 100%;
+	margin: 0 !important;
+	padding: 0 !important;
+	list-style: none;
+}
+li.meltdown_control,
+li.meltdown_controlgroup {
+	position: relative;
+	float: left;
+	margin: 0 0 0 5px;
+	padding: 0;
+}
+	.meltdown_controls li.meltdown_control-preview { float: right; margin-right: 5px; }
+	.meltdown_controls li.meltdown_control-table,
+	.meltdown_controls li.meltdown_controlgroup-kitchenSink { padding-left: 5px; border-left: 1px solid #ccc; }
+li.meltdown_control span,
+li.meltdown_controlgroup > span {
+	float: left;
+	padding: 6px;
+	line-height: 1em;
+	height: 12px;
+	min-width: 12px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	border-radius: 2px;
+	color: #333;
+	font-weight: bold;
+	font-size: 12px;
+	cursor: pointer;
+}
+li.meltdown_control:hover span,
+li.meltdown_control:focus span {
+	color: #06c;
+}
+.meltdown_controls li.meltdown_control-bold span,
+.meltdown_controls li.meltdown_control-italics span,
+.meltdown_controls li.meltdown_control-ul span,
+.meltdown_controls li.meltdown_control-ol span,
+.meltdown_controls li.meltdown_control-hr span,
+.meltdown_controls li.meltdown_control-table span,
+.meltdown_controls li.meltdown_control-preview span,
+.meltdown_controls li.meltdown_control-link span,
+.meltdown_controls li.meltdown_control-img span,
+.meltdown_controls li.meltdown_control-blockquote span,
+.meltdown_controls li.meltdown_control-codeblock span,
+.meltdown_controls li.meltdown_control-code span,
+.meltdown_controls li.meltdown_control-footnote span,
+.meltdown_controls li.meltdown_controlgroup-kitchenSink > span {
+	height: 12px;
+	position: relative;
+	text-indent: -9000em;
+	width: 12px;
+}
+.meltdown_controls li.meltdown_control-bold span:before,
+.meltdown_controls li.meltdown_control-italics span:before,
+.meltdown_controls li.meltdown_control-ul span:before,
+.meltdown_controls li.meltdown_control-ol span:before,
+.meltdown_controls li.meltdown_control-hr span:before,
+.meltdown_controls li.meltdown_control-table span:before,
+.meltdown_controls li.meltdown_control-preview span:before,
+.meltdown_controls li.meltdown_control-link span:before,
+.meltdown_controls li.meltdown_control-img span:before,
+.meltdown_controls li.meltdown_control-blockquote span:before,
+.meltdown_controls li.meltdown_control-codeblock span:before,
+.meltdown_controls li.meltdown_control-code span:before,
+.meltdown_controls li.meltdown_control-footnote span:before,
+.meltdown_controls li.meltdown_controlgroup-kitchenSink > span:before {
+	position: absolute;
+		left: 4px;
+		top: 4px;
+	font-family: 'meltdown';
+	speak: none;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 16px;
+	line-height: 1;
+	-webkit-font-smoothing: antialiased;
+	text-indent: 0;
+}
+/* Resize and reposition Bold */
+.meltdown_controls li.meltdown_control-bold span:before {
+	content: "\62";
+	font-size: 12px;
+	left: 7px;
+	top: 7px;
+}
+/* Resize and reposition Italics */
+.meltdown_controls li.meltdown_control-italics span:before {
+	content: "\69";
+	font-size: 12px;
+	left: 8px;
+	top: 7px;
+}
+.meltdown_controls li.meltdown_control-ul span:before {
+	content: "\2a";
+}
+.meltdown_controls li.meltdown_control-ol span:before {
+	content: "\31";
+}
+.meltdown_controls li.meltdown_control-table span:before {
+	content: "\74";
+}
+.meltdown_controls li.meltdown_control-preview span:before {
+	content: "\73";
+}
+	.meltdown_controls li.meltdown_preview-showing span:before {
+		content: "\68"; /* Toggle to Closed Eye */
+		color: #06c;
+	}
+.meltdown_controls li.meltdown_controlgroup-kitchenSink > span:before {
+	content: "\2b";
+}
+.meltdown_controls li.meltdown_control-link span:before {
+	content: "\6c";
+}
+.meltdown_controls li.meltdown_control-img span:before {
+	content: "\70";
+}
+.meltdown_controls li.meltdown_control-blockquote span:before {
+	content: "\22";
+}
+.meltdown_controls li.meltdown_control-codeblock span:before {
+	content: "\5b";
+}
+.meltdown_controls li.meltdown_control-code span:before {
+	content: "\3c";
+}
+.meltdown_controls li.meltdown_control-footnote span:before {
+	content: "\66";
+}
+.meltdown_controls li.meltdown_control-hr span:before {
+	content: "\5f";
+}
+
+li.meltdown_controlgroup ul {
+	position: absolute;
+		left: 0;
+		top: 24px;
+	margin: 0 !important;
+	padding: 5px !important;
+	min-width: 100%;
+	background: #fff;
+	border: 1px solid #a8a8a8;
+	list-style: none;
+	-webkit-box-shadow: 0 3px 10px rgba(0,0,0,.2);
+	-moz-box-shadow: 0 3px 10px rgba(0,0,0,.2);
+	box-shadow: 0 3px 10px rgba(0,0,0,.2);
+	-webkit-background-clip: padding-box;
+	-moz-background-clip: padding;
+	background-clip: padding-box;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+	.meltdown_controls li.meltdown_controlgroup-kitchenSink > ul {
+		width: 120px;
+	}
+	li.meltdown_controlgroup-open > span {
+		color: #06c;
+	}
+.meltdown_controls li.meltdown_controlgroup i.meltdown-icon-caret-down {
+	
+}
+li.meltdown_controlgroup li {
+	float: none;
+	margin: 0;
+}
+.meltdown_controls li.meltdown_controlgroup-kitchenSink li { float: left; margin-left: 5px; }
+li.meltdown_controlgroup li span { display: block; float: none; }
+	
+
+/* Meltdown Preview
+=======================================================================*/
+
+.meltdown_preview-header {
+	display: block;
+	padding: 2px 5px;
+	font-size: 11px;
+	font-weight: bold;
+	color: #666;
+	text-transform: uppercase;
+	text-align: center;
+	border: 1px solid #a8a8a8;
+	border-bottom-color: #ccc;
+	background: #eeeeee; /* Old browsers */
+	background: -moz-linear-gradient(top, #eeeeee 0%, #eeeeee 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeee), color-stop(100%,#eeeeee)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #eeeeee 0%,#eeeeee 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #eeeeee 0%,#eeeeee 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #eeeeee 0%,#eeeeee 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #eeeeee 0%,#eeeeee 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#eeeeee',GradientType=0 ); /* IE6-9 */
+	-webkit-border-top-left-radius: 3px;
+	-webkit-border-top-right-radius: 3px;
+	-moz-border-radius-topleft: 3px;
+	-moz-border-radius-topright: 3px;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+}
+.meltdown_preview {
+	border: 1px solid #a8a8a8;
+	border-top: 0;
+	margin-bottom: 3px;
+	padding: 5px;
+	overflow: auto;
+	background: #fff;
+	-webkit-border-bottom-right-radius: 3px;
+	-webkit-border-bottom-left-radius: 3px;
+	-moz-border-radius-bottomright: 3px;
+	-moz-border-radius-bottomleft: 3px;
+	border-bottom-right-radius: 3px;
+	border-bottom-left-radius: 3px;
+}
+	.meltdownvisible .meltdown_preview {
+	
+	}
+.meltdown_wrap textarea {
+	margin: 0 !important;
+	padding: 5px;
+	border: 1px solid #a8a8a8;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+	.meltdown_wrap textarea:focus {
+		outline: none;
+		border-color: #5c8cd0;
+	}
