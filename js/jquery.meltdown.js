@@ -110,7 +110,13 @@
 	function getPreivewControl(options, thees, previewArea) {
 		var control = jQuery('<li class="' + name + '_control ' + name + '_control-preview"><span title="Show preview">Show preview</span></li>');
 		control.on('click', function () {
+
+			if (control.hasClass('disabled')) {
+				return;
+			}
+
 			if (!previewArea.is(':visible')) {
+				previewArea.find('.meltdown_preview').height(thees.outerHeight());
 				if (options.hasEffects) {
 					previewArea.slideToggle(options.previewTimeout);
 				} else {
@@ -249,6 +255,61 @@
 		return examples;
 	}
 
+	function addToolTip(wrap) {
+		var tip, preview;
+
+		preview = wrap.find('.meltdown_control-preview');
+		if (jQuery.qtip !== 'undefined') {
+			// Disable the preview
+			preview.addClass('disabled');
+			tip = preview.qtip({
+				content: "Warning this feature is a tech preview feature.<br/>"
+						 + "There is a <a target=\"_blank\" href=\"https://github.com/iphands/Meltdown/issues/1\">known issue</a> with one of the libraries used to generate the live preview.<br/><br/>"
+						 + "Live previews <b>can</b> cause the browser tab to stop responding.<br/><br/>"
+						 + "This warning will be removed when <a href=\"#\" target=\"_blank\" href=\"https://github.com/iphands/Meltdown/issues/1\">the issue</a> is resolved.<br/></br>"
+						 + "<input type=\"button\" class=\"meltdown_control-preview-enabler\" value=\"Click here\"> to remove this warning and enable live previews",
+				show: {
+					delay: 0,
+					when: {
+						event: 'mouseover'
+					}
+				},
+				hide: {
+					delay: 5000,
+					when: {
+						event: 'mouseout'
+					}
+				},
+				position: {
+					corner: {
+						target: 'leftMiddle',
+						tooltip: 'rightMiddle'
+					}
+				},
+				api: {
+					onRender: function () {
+						jQuery('.meltdown_control-preview-enabler').click(function () {
+							tip.qtip('destroy');
+							jQuery('.meltdown_control-preview').removeClass('disabled');
+							preview.click();
+						});
+					}
+				},
+				style: {
+					classes: 'meltdown_techpreview-qtip',
+					name: 'dark',
+					lineHeight: '1.3em',
+					padding: '12px',
+					width: {
+						max: 300,
+						min: 0
+					},
+					tip: true
+				}
+			});
+		}
+	}
+
 	jQuery.fn.meltdown = function (userOptions) {
 		return this.each(function () {
 			var defaults, opts, thees, wrap, previewWrap, preview, bar, controls;
@@ -258,8 +319,7 @@
 
 			thees = jQuery(this);
 			thees.wrap('<div class="' + name + '_wrap" />');
-			thees.before('<div><div style="display: none;" class="' + name + '_preview-wrap"><span class="' + name + '_preview-header">Preview Area</span><div class="' + name + '_preview"></div></div></div><div class="meltdown_bar"><ul class="' + name + '_controls"></ul></div>');
-
+			thees.before('<div><div style="display: none;" class="' + name + '_preview-wrap"><span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span><div class="' + name + '_preview"></div></div></div><div class="meltdown_bar"><ul class="' + name + '_controls"></ul></div>');
 			wrap = thees.parent();
 			previewWrap = wrap.children(':eq(0)').children(':eq(0)'); /* wrapper for the preview area, but not where the updated content goes */
 			preview = previewWrap.children(':eq(1)'); /* preview area where updates happen */
@@ -278,6 +338,7 @@
 				}
 			});
 
+			addToolTip(wrap);
 		});
 	};
 
