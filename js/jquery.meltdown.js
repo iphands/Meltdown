@@ -15,6 +15,7 @@
 
 
 	function update(previewArea, input) {
+		previewArea.height(input.outerHeight());
 		previewArea.html(Markdown(input.val()));
 	}
 
