@@ -260,7 +260,7 @@
 		var tip, preview;
 
 		preview = wrap.find('.meltdown_control-preview');
-		if (jQuery.qtip !== 'undefined') {
+		if (typeof jQuery.qtip !== 'undefined') {
 			// Disable the preview
 			preview.addClass('disabled');
 			tip = preview.qtip({
