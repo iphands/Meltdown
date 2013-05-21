@@ -149,12 +149,9 @@ Markdown_Parser.prototype.init = function() {
     //    str_repeat('(?>[^()\\s]+|\\(', this.nested_url_parenthesis_depth) +
     //    str_repeat('(?>\\)))*', this.nested_url_parenthesis_depth)
     //);
-    this.nested_brackets_re =
-        this._php_str_repeat('(?:[^\\[\\]]+|\\[', this.nested_brackets_depth) +
-        this._php_str_repeat('\\])*', this.nested_brackets_depth);
-    this.nested_url_parenthesis_re =
-        this._php_str_repeat('(?:[^\\(\\)\\s]+|\\(', this.nested_url_parenthesis_depth) +
-        this._php_str_repeat('(?:\\)))*', this.nested_url_parenthesis_depth);
+
+    this.nested_brackets_re = '(?:\\[[^\\]]*\]|[^\\[\\]]*)';
+    this.nested_url_parenthesis_re = '(?:\\([^\\)\\s]*\\)|[^\\(\\)]*)';
 
     // Table of hash values for escaped characters:
     var tmp = [];
@@ -669,65 +666,82 @@ Markdown_Parser.prototype.doAnchors = function(text) {
     //
     // First, handle reference-style links: [link text] [id]
     //
-    text = text.replace(new RegExp(
-        '('               + // wrap whole match in $1
-          '\\['           +
-            '(' + this.nested_brackets_re + ')' +  // link text = $2
-          '\\]'           +
+	// [porting note] the cheatText and conditional
+	// are simply checks that look and see whether the regex will
+	// be able to find a match. If we don't do this here we can get caught in
+	// a situation where backtracking grows exponentially.
+	// This helps us keep the same regex as the upstream PHP impl, but still be safe/fast
+    var cheatText = text.replace(/[^\[^\]^\n^\s]/gm, '');
+    if ((cheatText.indexOf("[][]") !== -1) || (cheatText.indexOf("[] []") !== -1) || (cheatText.indexOf("[]\n[]") !== -1)) {
+		text = text.replace(new RegExp(
+		    '('               + // wrap whole match in $1
+		      '\\['           +
+		        '(' + this.nested_brackets_re + ')' +  // link text = $2
+		      '\\]'           +
 
-          '[ ]?'          + // one optional space
-          '(?:\\n[ ]*)?'  + // one optional newline followed by spaces
+		      '[ ]?'          + // one optional space
+		      '(?:\\n[ ]*)?'  + // one optional newline followed by spaces
 
-          '\\['           +
-            '(.*?)'       + // id = $3
-          '\\]'           +
-        ')',
-        'mg'
-    ), _doAnchors_reference_callback);
+		      '\\['           +
+		        '(.*?)'       + // id = $3
+		      '\\]'           +
+		    ')',
+		    'mg'
+		), _doAnchors_reference_callback);
+	}
 
     //
     // Next, inline-style links: [link text](url "optional title")
     //
-    text = text.replace(new RegExp(
-        '('               + // wrap whole match in $1
-          '\\['           +
-            '(' + this.nested_brackets_re + ')' + // link text = $2
-          '\\]'           +
-          '\\('           + // literal paren
-            '[ \\n]*'     +
-            '(?:'         +
-                '<(.+?)>' + // href = $3
-            '|'           +
-                '(' + this.nested_url_parenthesis_re + ')' + // href = $4
-            ')'           +
-            '[ \\n]*'     +
-            '('           + // $5
-              '([\'"])'   + // quote char = $6
-              '(.*?)'     + // Title = $7
-              '\\6'       + // matching quote
-              '[ \\n]*'   + // ignore any spaces/tabs between closing quote and )
-            ')?'          + // title is optional
-          '\\)'           +
-        ')',
-        'mg'
-    ), function(match, whole_match, link_text, url3, url4, x0, x1, title) {
-        //console.log(match);
-        link_text = self.runSpanGamut(link_text);
-        var url = url3 ? url3 : url4;
+	// [porting note] the cheatText and conditional
+	// are simply checks that look and see whether the regex will
+	// be able to find a match. If we don't do this here we can get caught in
+	// a situation where backtracking grows exponentially.
+	// This helps us keep the same regex as the upstream PHP impl, but still be safe/fast
+    cheatText = text.replace(/[^\(^\)^\[^\]^\s]/gm, '').replace(/\(.*?\)/,'()');
+	if ((cheatText.indexOf("]()") !== -1) || (cheatText.indexOf("](\"\")") !== -1)) {
+		text = text.replace(new RegExp(
+		    '('               + // wrap whole match in $1
+		      '\\['           +
+		        '(' + this.nested_brackets_re + ')' + // link text = $2
+		      '\\]'           +
+		      '\\('           + // literal paren
+		        '[ \\n]*'     +
+		        '(?:'         +
+		            '<(.+?)>' + // href = $3
+		        '|'           +
+		            '(' + this.nested_url_parenthesis_re + ')' + // href = $4
+		        ')'           +
+		        '[ \\n]*'     +
+		        '('           + // $5
+		          '([\'"])'   + // quote char = $6
+		          '(.*?)'     + // Title = $7
+		          '\\6'       + // matching quote
+		          '[ \\n]*'   + // ignore any spaces/tabs between closing quote and )
+		        ')?'          + // title is optional
+		      '\\)'           +
+		    ')',
+		    'mg'
+		), function(match, whole_match, link_text, url3, url4, x0, x1, title) {
+		    //console.log(match);
+		    link_text = self.runSpanGamut(link_text);
+		    var url = url3 ? url3 : url4;
 
-        url = self.encodeAttribute(url);
+		    url = self.encodeAttribute(url);
 
-        var result = "<a href=\"" + url + "\"";
-        if ('undefined' !== typeof title && title !== '') {
-            title = self.encodeAttribute(title);
-            result +=  " title=\"" + title + "\"";
-        }
+		    var result = "<a href=\"" + url + "\"";
+		    if ('undefined' !== typeof title && title !== '') {
+		        title = self.encodeAttribute(title);
+		        result +=  " title=\"" + title + "\"";
+		    }
 
-        link_text = self.runSpanGamut(link_text);
-        result += ">" + link_text + "</a>";
+		    link_text = self.runSpanGamut(link_text);
+		    result += ">" + link_text + "</a>";
 
-        return self.hashPart(result);
-    });
+		    return self.hashPart(result);
+		});
+	}
+
 
     //
     // Last, handle reference-style shortcuts: [link text]
@@ -756,92 +770,98 @@ Markdown_Parser.prototype.doImages = function(text) {
     //
     // First, handle reference-style labeled images: ![alt text][id]
     //
-    text = text.replace(new RegExp(
-        '('              + // wrap whole match in $1
-          '!\\['         +
-            '(' + this.nested_brackets_re + ')' + // alt text = $2
-          '\\]'          +
+	cheatText = text.replace(/[^!^\[^\]^\n^\s]/gm, '').replace(/\[\s*\]/g, '[]');
+	if ((cheatText.indexOf('![][]') !== -1) || (cheatText.indexOf('![] []') !== -1) || (cheatText.indexOf('![]\n[]') !== -1)) {
+		text = text.replace(new RegExp(
+		    '('              + // wrap whole match in $1
+		      '!\\['         +
+		        '(' + this.nested_brackets_re + ')' + // alt text = $2
+		      '\\]'          +
 
-          '[ ]?'         + // one optional space
-          '(?:\\n[ ]*)?' + // one optional newline followed by spaces
+		      '[ ]?'         + // one optional space
+		      '(?:\\n[ ]*)?' + // one optional newline followed by spaces
 
-          '\\['          +
-            '(.*?)'      + // id = $3
-          '\\]'          +
+		      '\\['          +
+		        '(.*?)'      + // id = $3
+		      '\\]'          +
 
-        ')',
-        'mg'
-    ), function(match, whole_match, alt_text, link_id) {
-        //console.log(match);
-        link_id = link_id.toLowerCase();
+		    ')',
+		    'mg'
+		), function(match, whole_match, alt_text, link_id) {
+		    //console.log(match);
+		    link_id = link_id.toLowerCase();
 
-        if (typeof(link_id) !== 'string' || link_id === '') {
-            link_id = alt_text.toLowerCase(); // for shortcut links like ![this][].
-        }
+		    if (typeof(link_id) !== 'string' || link_id === '') {
+		        link_id = alt_text.toLowerCase(); // for shortcut links like ![this][].
+		    }
 
-        alt_text = self.encodeAttribute(alt_text);
-        var result;
-        if ('undefined' !== typeof self.urls[link_id]) {
-            var url = self.encodeAttribute(self.urls[link_id]);
-            result = "<img src=\"" + url + "\" alt=\"" + alt_text + "\"";
-            if ('undefined' !== typeof self.titles[link_id]) {
-                var title = self.titles[link_id];
-                title = self.encodeAttribute(title);
-                result +=  " title=\"" + title + "\"";
-            }
-            result += self.empty_element_suffix;
-            result = self.hashPart(result);
-        }
-        else {
-            // If there's no such link ID, leave intact:
-            result = whole_match;
-        }
+		    alt_text = self.encodeAttribute(alt_text);
+		    var result;
+		    if ('undefined' !== typeof self.urls[link_id]) {
+		        var url = self.encodeAttribute(self.urls[link_id]);
+		        result = "<img src=\"" + url + "\" alt=\"" + alt_text + "\"";
+		        if ('undefined' !== typeof self.titles[link_id]) {
+		            var title = self.titles[link_id];
+		            title = self.encodeAttribute(title);
+		            result +=  " title=\"" + title + "\"";
+		        }
+		        result += self.empty_element_suffix;
+		        result = self.hashPart(result);
+		    }
+		    else {
+		        // If there's no such link ID, leave intact:
+		        result = whole_match;
+		    }
 
-        return result;
-    });
+		    return result;
+		});
+	}
 
     //
     // Next, handle inline images:  ![alt text](url "optional title")
     // Don't forget: encode * and _
     //
-    text = text.replace(new RegExp(
-        '('                + // wrap whole match in $1
-          '!\\['           +
-            '(' + this.nested_brackets_re + ')' +		// alt text = $2
-          '\\]'            +
-          '\\s?'           + // One optional whitespace character
-          '\\('            + // literal paren
-            '[ \\n]*'      +
-            '(?:'          +
-                '<(\\S*)>' + // src url = $3
-            '|'            +
-                '(' + this.nested_url_parenthesis_re + ')' +	// src url = $4
-            ')'            +
-            '[ \\n]*'      +
-            '('            + // $5
-              '([\'"])'    + // quote char = $6
-              '(.*?)'      + // title = $7
-              '\\6'        + // matching quote
-              '[ \\n]*'    +
-            ')?'           + // title is optional
-          '\\)'            +
-        ')',
-        'mg'
-    ), function(match, whole_match, alt_text, url3, url4, x5, x6, title) {
-        //console.log(match);
-        var url = url3 ? url3 : url4;
+	cheatText = text.replace(/[^!^\(^\)^\[^\]^\n^\s]/gm, '').replace(/\[\s*\]/g, '[]');
+	if ((cheatText.indexOf(']()') !== -1) || (cheatText.indexOf('] ()') !== -1) || (cheatText.indexOf(']\n()') !== -1)) {
+		text = text.replace(new RegExp(
+		    '('                + // wrap whole match in $1
+		      '!\\['           +
+		        '(' + this.nested_brackets_re + ')' +		// alt text = $2
+		      '\\]'            +
+		      '\\s?'           + // One optional whitespace character
+		      '\\('            + // literal paren
+		        '[ \\n]*'      +
+		        '(?:'          +
+		            '<(\\S*)>' + // src url = $3
+		        '|'            +
+		            '(' + this.nested_url_parenthesis_re + ')' +	// src url = $4
+		        ')'            +
+		        '[ \\n]*'      +
+		        '('            + // $5
+		          '([\'"])'    + // quote char = $6
+		          '(.*?)'      + // title = $7
+		          '\\6'        + // matching quote
+		          '[ \\n]*'    +
+		        ')?'           + // title is optional
+		      '\\)'            +
+		    ')',
+		    'mg'
+		), function(match, whole_match, alt_text, url3, url4, x5, x6, title) {
+		    //console.log(match);
+		    var url = url3 ? url3 : url4;
 
-        alt_text = self.encodeAttribute(alt_text);
-        url = self.encodeAttribute(url);
-        var result = "<img src=\"" + url + "\" alt=\"" + alt_text + "\"";
-        if ('undefined' !== typeof title && title !== '') {
-            title = self.encodeAttribute(title);
-            result +=  " title=\"" + title + "\""; // $title already quoted
-        }
-        result += self.empty_element_suffix;
+		    alt_text = self.encodeAttribute(alt_text);
+		    url = self.encodeAttribute(url);
+		    var result = "<img src=\"" + url + "\" alt=\"" + alt_text + "\"";
+		    if ('undefined' !== typeof title && title !== '') {
+		        title = self.encodeAttribute(title);
+		        result +=  " title=\"" + title + "\""; // $title already quoted
+		    }
+		    result += self.empty_element_suffix;
 
-        return self.hashPart(result);
-    });
+		    return self.hashPart(result);
+		});
+	}
 
     return text;
 };
@@ -1051,14 +1071,16 @@ Markdown_Parser.prototype.doCodeBlocks = function(text) {
     var self = this;
     text = this.__wrapSTXETX__(text);
     text = text.replace(new RegExp(
-        '(?:\\n\\n|(?=\\x02)\\n?)' +
-        '('                        + // $1 = the code block -- one or more lines, starting with a space/tab
-          '(?:^'                   +
+        '(?:^|\\n\\n|(?=\\x02)\\n)?' +
+        '('                          + // $1 = the code block -- one or more lines, starting with a space/tab
+		  '(?:'                      +
+          '(?=('                     +
             '[ ]{' + this.tab_width + ',}' +  // Lines must start with a tab or a tab-width of spaces
-            '.*\\n+'               +
-          ')+'                     +
-        ')'                        +
-        '((?=[ ]{0,' + this.tab_width + '}\\S)|(?:\\n*(?=\\x03)))',  // Lookahead for non-space at line-start, or end of doc
+            '.*\\n+'                 +
+          '))\\2'                    +
+		  ')+'                       +
+        ')'                          +
+        '((?=^[ ]{0,' + this.tab_width + '}\\S)|(?:\\n*(?=\\x03)))',  // Lookahead for non-space at line-start, or end of doc
         'mg'
     ), function(match, codeblock) {
         //console.log(match);
@@ -1867,11 +1889,11 @@ MarkdownExtra_Parser.prototype._hashHTMLBlocks_inMarkdown = function(text, inden
                 ')'                +
                 '(?:'              +
                     '(?=[\\s"\'/a-zA-Z0-9])' + // Allowed characters after tag name.
-                    '('            +
+                    '(?=('            +
                         '".*?"|'   + // Double quotes (can contain `>`)
                         '\'.*?\'|' + // Single quotes (can contain `>`)
                         '.+?'      + // Anything but quotes and `>`.
-                    ')*?'          +
+                    '))\\3*?'          +
                 ')?'               +
             '>'                    + // End of tag.
         '|'                        +
@@ -1948,10 +1970,11 @@ MarkdownExtra_Parser.prototype._hashHTMLBlocks_inMarkdown = function(text, inden
         //
         // Check for: Code span marker
         //
-	if (tag.charAt(0) == "`" && text.replace(/[^`]/g, "").length != 0) {
+
+		if (tag.charAt(0) == "`") {
             // Find corresponding end marker.
             tag_re = this._php_preg_quote(tag);
-            if(matches = text.match(new RegExp('^(.+?|\\n[^\\n])*?[^`]' + tag_re + '[^`]'))) {
+			if (matches = text.match(new RegExp('^((?=(.+?|\\n[^\\n])))/1*?[^`]' + tag_re + '[^`]'))) {
                 // End marker found: pass text unchanged until marker.
                 parsed += tag + matches[0];
                 text = text.substr(matches[0].length);
@@ -1964,10 +1987,10 @@ MarkdownExtra_Parser.prototype._hashHTMLBlocks_inMarkdown = function(text, inden
         //
         // Check for: Fenced code block marker.
         //
-        else if(tag.match(new RegExp('^\\n?[ ]{0,' + (indent + 3) * '}~'))) {
+        else if(tag.match(new RegExp('^\\n?[ ]{0,' + (indent + 3) + '}~'))) {
             // Fenced code block marker: find matching end marker.
             tag_re = this._php_preg_quote(this._php_trim(tag));
-            if(matches = text.match(new RegExp('^(?>.*\\n)+?[ ]{0,' + indent + '}' + tag_re + '[ ]*\\n'))) {
+            if(matches = text.match(new RegExp('^(?:.*\\n)+?[ ]{0,' + indent + '}' + tag_re + '[ ]*\\n'))) {
                 // End marker found: pass text unchanged until marker.
                 parsed += tag + matches[0];
                 text = text.substr(matches[0].length);
@@ -2091,9 +2114,11 @@ MarkdownExtra_Parser.prototype._hashHTMLBlocks_inHTML = function(text, hash_meth
                 '(?:'                 +
                     '(?=[\\s"\'/a-zA-Z0-9])' + // Allowed characters after tag name.
                     '(?:'             +
+                    '(?=('            +
                         '".*?"|'      + // Double quotes (can contain `>`)
                         '\'.*?\'|'    + // Single quotes (can contain `>`)
                         '.+?'         + // Anything but quotes and `>`.
+                    '))\\4'           +
                     ')*?'             +
                 ')?'                  +
             '>'                       + // End of tag.
@@ -2598,19 +2623,23 @@ MarkdownExtra_Parser.prototype.doFencedCodeBlocks = function(text) {
 
     text = this.__wrapSTXETX__(text);
     text = text.replace(new RegExp(
-        '(?:\\n|\\x02)'          +
+		'(?:\\n|\\x02)'          +
         // 1: Opening marker
-        '('                      +
+		'('                      +
             '~{3,}'              + // Marker: three tilde or more.
         ')'                      +
         '[ ]*\\n'                + // Whitespace and newline following marker.
+
         // 2: Content
-        '('                      +
-            '(?:'                +
+		'('                      +
+			'(?:'                +
+			'(?=('               +
                 '(?!\\1[ ]*\\n)' + // Not a closing marker.
                 '.*\\n+'         +
+            '))\\3'              +
             ')+'                 +
-        ')'                      +
+		')'                      +
+
         // Closing marker.
         '\\1[ ]*\\n',
         "mg"
