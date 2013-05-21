@@ -9,14 +9,21 @@
 (function (jQuery) {
 	'use strict';
 
-	var ver, name;
+	var ver, name, dbg;
 	ver = '0.1';
 	name = 'meltdown';
+	dbg = true;
 
+	function debug(msg) {
+		if ((typeof console !== 'undefined') && (dbg === true)) {
+			console.log(msg);
+		}
+	}
 
 	function update(previewArea, input) {
+		var mde = Markdown;
 		previewArea.height(input.outerHeight());
-		previewArea.html(Markdown(input.val()));
+		previewArea.html(mde(input.val()));
 	}
 
 	function addEventHandler(thees, example, control) {
@@ -28,11 +35,13 @@
 				} else {
 					selection = thees.getSelection();
 					if (selection.length  === 0) {
-						thees.replaceSelectedText(example.markdown);
+						thees.replaceSelectedText(example.markdown + "\n\n\n");
+					} else {
+						thees.insertText(example.markdown + "\n\n\n", selection.start);
 					}
 				}
 			} else {
-				console.log('Failed to load surroundSelectedText');
+				debug('Failed to load surroundSelectedText');
 				thees.val(example.markdown + "\n\n\n" + thees.val());
 			}
 			thees.keyup();
@@ -221,7 +230,9 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Code Block",
-			markdown: "~~~\nExample code\n~~~"
+			before: "\n~~~\n",
+			after: "\n~~~\n",
+			type: "wrap"
 		};
 
 		examples.code = {
@@ -229,7 +240,9 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Inline Code",
-			markdown: "`Example code`"
+			before: "`",
+			after: "`",
+			type: "wrap"
 		};
 
 		examples.footnote = {
