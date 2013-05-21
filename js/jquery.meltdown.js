@@ -63,8 +63,9 @@
 			}
 		}
 
-		function addClickHandler(element, outer) {
+		function addClickHandler(outer) {
 			outer.on('click', function () {
+                var element = jQuery(this);
 				element.siblings('li').removeClass(name + '_controlgroup-open').children('ul').hide();
 				element.toggleClass(name + '_controlgroup-open').children('ul').toggle();
 			});
@@ -86,7 +87,7 @@
 						controls.append(outer);
 					}
 					group.append(t.control);
-					addClickHandler(thees, outer);
+					addClickHandler(outer);
 				} else {
 					controls.append(t.control);
 				}
