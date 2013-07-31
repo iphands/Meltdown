@@ -29,7 +29,7 @@
 	function addEventHandler(thees, example, control) {
 		var selection;
 		control.click(function (e) {
-			if (typeof jQuery.surroundSelectedText !== undefined) {
+			if (typeof jQuery.surroundSelectedText !== 'undefined') {
 				if (example.type === "wrap") {
 					thees.surroundSelectedText(example.before, example.after, true);
 				} else {
@@ -58,7 +58,7 @@
 
 				control = jQuery('<li><span>' + example.label + '</span></li>');
 				control.addClass(name + '_control');
-				if (typeof example.styleClass !== undefined) {
+				if (typeof example.styleClass !== 'undefined') {
 					control.addClass(example.styleClass);
 				}
 
@@ -107,7 +107,7 @@
 	function getAddExampleControl(options, thees, previewArea, example) {
 		var control = jQuery('<li><span>' + example.label + '</span></li>');
 		control.addClass(name + '_control');
-		if (typeof example.styleClass !== undefined) {
+		if (typeof example.styleClass !== 'undefined') {
 			control.addClass(example.styleClass);
 		}
 		control.children(":first").attr('title', example.altText);
