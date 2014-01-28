@@ -29,7 +29,7 @@
 	function addEventHandler(thees, example, control) {
 		var selection;
 		control.click(function (e) {
-			if (typeof jQuery.surroundSelectedText !== 'undefined') {
+			if (typeof thees.surroundSelectedText !== 'undefined') {
 				if (example.type === "wrap") {
 					thees.surroundSelectedText(example.before, example.after, true);
 				} else {
