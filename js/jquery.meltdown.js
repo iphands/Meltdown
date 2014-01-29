@@ -28,17 +28,26 @@
 
 	function addEventHandler(thees, example, control) {
 		control.click(function (e) {
-			var text, selection, before, placeholder, after, charBefore, charAfter;
+			var text, selection, before, placeholder, after, lineStart, lineEnd, charBefore, charAfter;
 			before = example.before || "";
 			placeholder =  example.placeholder || "";
 			after = example.after || "";
 			if (typeof thees.surroundSelectedText !== 'undefined') {
+				text = thees.val();
 				selection = thees.getSelection();
+				if (example.lineSelect) {
+					lineStart = text.lastIndexOf('\n', selection.start) + 1;
+					lineEnd = text.indexOf('\n', selection.end);
+					if(lineEnd === -1) {
+						lineEnd = text.length;
+					}
+					thees.setSelection(lineStart, lineEnd);
+					selection = thees.getSelection();
+				}
 				if(selection.length > 0) {
 					placeholder = selection.text;
 				}
 				if (example.isBlock) {
-					text = thees.val();
 					for (var i = 0; i < 2; i++) {
 						charBefore = text.charAt(selection.start - 1 - i);
 						charAfter = text.charAt(selection.end + i);
@@ -185,6 +194,7 @@
 				altText: "Unordered List",
 				before: "* ",
 				placeholder: "Item\n* Item",
+				lineSelect: true,
 				isBlock: true
 			},
 			ol: {
@@ -192,6 +202,7 @@
 				altText: "Ordered List",
 				before: "1. ",
 				placeholder: "Item 1\n2. Item 2\n3. Item 3",
+				lineSelect: true,
 				isBlock: true
 			},
 			table: {
@@ -210,7 +221,8 @@
 				groupLabel: "Headers",
 				label: "H" + i,
 				altText: "Header " + i,
-				before: pounds + " "
+				before: pounds + " ",
+				lineSelect: true
 			};
 		}
 
@@ -241,6 +253,7 @@
 			altText: "Blockquote",
 			before: "> ",
 			placeholder: "Quoted text",
+			lineSelect: true,
 			isBlock: true
 		};
 
@@ -252,6 +265,7 @@
 			before: "~~~\n",
 			placeholder: "Code",
 			after: "\n~~~",
+			lineSelect: true,
 			isBlock: true
 		};
 
