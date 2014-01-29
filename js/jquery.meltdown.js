@@ -35,9 +35,9 @@
 				} else {
 					selection = thees.getSelection();
 					if (selection.length  === 0) {
-						thees.replaceSelectedText(example.markdown + "\n\n\n");
+						thees.replaceSelectedText(example.markdown);
 					} else {
-						thees.insertText(example.markdown + "\n\n\n", selection.start);
+						thees.insertText(example.markdown, selection.start);
 					}
 				}
 			} else {
@@ -176,12 +176,12 @@
 			ol: {
 				label: "OL",
 				altText: "Ordered List",
-				markdown: "1. Item 1\n2. Item 2\n3. Item 3\n\n"
+				markdown: "1. Item 1\n2. Item 2\n3. Item 3\n"
 			},
 			table: {
 				label: "Table",
 				altText: "Table",
-				markdown: "First Header  | Second Header\n------------- | -------------\nContent Cell  | Content Cell\nContent Cell  | Content Cell\n\n"
+				markdown: "First Header  | Second Header\n------------- | -------------\nContent Cell  | Content Cell\nContent Cell  | Content Cell\n"
 			}
 		};
 
@@ -230,7 +230,7 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Code Block",
-			before: "\n~~~\n",
+			before: "~~~\n",
 			after: "\n~~~\n",
 			type: "wrap"
 		};
@@ -250,7 +250,7 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Footnote",
-			markdown: "[^1]\n\n[^1]:Example footnote"
+			markdown: "[^1]\n\n[^1]:Example footnote\n"
 		};
 
 		examples.hr = {
@@ -258,7 +258,7 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Horizontal Rule",
-			markdown: "----------"
+			markdown: "----------\n"
 		};
 
 		for (key in examples) {
