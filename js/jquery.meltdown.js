@@ -118,7 +118,7 @@
 		return control;
 	}
 
-	function getPreivewControl(options, thees, previewArea) {
+	function getPreviewControl(options, thees, previewArea) {
 		var control = jQuery('<li class="' + name + '_control ' + name + '_control-preview"><span title="Show preview">Show preview</span></li>');
 		control.on('click', function () {
 
@@ -342,7 +342,7 @@
 			controls = bar.children().first();
 
 			buildControls(opts, thees, controls);
-			controls.append(getPreivewControl(opts, thees, previewWrap));
+			controls.append(getPreviewControl(opts, thees, previewWrap));
 
 			wrap.width(thees.outerWidth());
 			preview.height(thees.outerHeight());
