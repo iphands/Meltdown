@@ -34,7 +34,7 @@
 					thees.surroundSelectedText(example.before, example.after, true);
 				} else {
 					selection = thees.getSelection();
-					if (selection.length  === 0) {
+					if (selection.length > 0) {
 						thees.replaceSelectedText(example.markdown);
 					} else {
 						thees.insertText(example.markdown, selection.start);
