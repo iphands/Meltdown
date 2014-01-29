@@ -27,22 +27,36 @@
 	}
 
 	function addEventHandler(thees, example, control) {
-		var selection;
 		control.click(function (e) {
+			var text, selection, before, placeholder, after, charBefore, charAfter;
+			before = example.before || "";
+			placeholder =  example.placeholder || "";
+			after = example.after || "";
 			if (typeof thees.surroundSelectedText !== 'undefined') {
-				if (example.type === "wrap") {
-					thees.surroundSelectedText(example.before, example.after, true);
-				} else {
-					selection = thees.getSelection();
-					if (selection.length > 0) {
-						thees.replaceSelectedText(example.markdown);
-					} else {
-						thees.insertText(example.markdown, selection.start);
+				selection = thees.getSelection();
+				if(selection.length > 0) {
+					placeholder = selection.text;
+				}
+				if (example.isBlock) {
+					text = thees.val();
+					for (var i = 0; i < 2; i++) {
+						charBefore = text.charAt(selection.start - 1 - i);
+						charAfter = text.charAt(selection.end + i);
+						if (charBefore !== "\n" && charBefore !== "") {
+							before = "\n" + before;
+						}
+						if (charAfter !== "\n" && charAfter !== "") {
+							after = after + "\n";
+						}
 					}
 				}
+				if (selection.text !== placeholder) {
+					thees.replaceSelectedText(placeholder, "select");
+				}
+				thees.surroundSelectedText(before, after, "select");
 			} else {
 				debug('Failed to load surroundSelectedText');
-				thees.val(example.markdown + "\n\n\n" + thees.val());
+				thees.val(before + placeholder + after + "\n\n" + thees.val());
 			}
 			thees.keyup();
 		});
@@ -158,46 +172,45 @@
 				label: "B",
 				altText: "Bold",
 				before: "**",
-				after: "**",
-				type: "wrap"
+				after: "**"
 			},
 			italics: {
 				label: "I",
 				altText: "Italics",
 				before: "*",
-				after: "*",
-				type: "wrap"
+				after: "*"
 			},
 			ul: {
 				label: "UL",
 				altText: "Unordered List",
-				markdown: "* Item\n* Item\n"
+				before: "* ",
+				placeholder: "Item\n* Item",
+				isBlock: true
 			},
 			ol: {
 				label: "OL",
 				altText: "Ordered List",
-				markdown: "1. Item 1\n2. Item 2\n3. Item 3\n"
+				before: "1. ",
+				placeholder: "Item 1\n2. Item 2\n3. Item 3",
+				isBlock: true
 			},
 			table: {
 				label: "Table",
 				altText: "Table",
-				markdown: "First Header  | Second Header\n------------- | -------------\nContent Cell  | Content Cell\nContent Cell  | Content Cell\n"
+				before: "First Header  | Second Header\n------------- | -------------\nContent Cell  | Content Cell\nContent Cell  | Content Cell\n",
+				isBlock: true
 			}
 		};
 
+		pounds = "";
 		for (i = 1; i <= 6; i += 1) {
-			pounds = "";
-			for (j = 1; j <= i; j += 1) {
-				pounds = pounds + "#";
-			}
+			pounds = pounds + "#";
 			examples['h' + i] = {
 				group: "h",
 				groupLabel: "Headers",
 				label: "H" + i,
 				altText: "Header " + i,
-				before: pounds,
-				after: "",
-				type: "wrap"
+				before: pounds + " "
 			};
 		}
 
@@ -206,7 +219,9 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Link",
-			markdown: "[Example link](http://example.com/ \"Link title\")"
+			before: "[",
+			placeholder: "Example link",
+			after: "](http:// \"Link title\")"
 		};
 
 		examples.img = {
@@ -214,7 +229,9 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Image",
-			markdown: "![Alt text](http://image_url)"
+			before: "![Alt text](",
+			placeholder: "http://",
+			after: ")"
 		};
 
 		examples.blockquote = {
@@ -222,7 +239,9 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Blockquote",
-			markdown: "> Example text"
+			before: "> ",
+			placeholder: "Quoted text",
+			isBlock: true
 		};
 
 		examples.codeblock = {
@@ -231,8 +250,9 @@
 			groupLabel: "Kitchen Sink",
 			altText: "Code Block",
 			before: "~~~\n",
-			after: "\n~~~\n",
-			type: "wrap"
+			placeholder: "Code",
+			after: "\n~~~",
+			isBlock: true
 		};
 
 		examples.code = {
@@ -241,8 +261,8 @@
 			groupLabel: "Kitchen Sink",
 			altText: "Inline Code",
 			before: "`",
+			placeholder: "code",
 			after: "`",
-			type: "wrap"
 		};
 
 		examples.footnote = {
@@ -250,7 +270,9 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Footnote",
-			markdown: "[^1]\n\n[^1]:Example footnote\n"
+			before: "[^1]\n\n[^1]:",
+			placeholder: "Example footnote",
+			isBlock: true
 		};
 
 		examples.hr = {
@@ -258,7 +280,9 @@
 			group: "kitchenSink",
 			groupLabel: "Kitchen Sink",
 			altText: "Horizontal Rule",
-			markdown: "----------\n"
+			before: "----------",
+			placeholder: "",
+			isBlock: true
 		};
 
 		for (key in examples) {
