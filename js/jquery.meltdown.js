@@ -67,6 +67,8 @@
 				debug('Failed to load surroundSelectedText');
 				thees.val(before + placeholder + after + "\n\n" + thees.val());
 			}
+			e.preventDefault();
+			thees.focus();
 			thees.keyup();
 		});
 	}
