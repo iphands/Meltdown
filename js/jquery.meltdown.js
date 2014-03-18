@@ -21,9 +21,7 @@
 	}
 
 	function update(preview, editor) {
-			var mde = Markdown;
-			preview.height(input.outerHeight());
-			preview.html(mde(input.val()));
+		preview.html(Markdown(editor.val()));
 	}
 
 	function addEventHandler(editor, example, control) {
@@ -137,7 +135,6 @@
 			}
 
 			if (!previewWrap.is(':visible')) {
-				previewWrap.find('.meltdown_preview').height(editor.outerHeight());
 				update(previewWrap.children(':eq(1)'), editor);
 				previewWrap.stop().slideDown(options.previewTimeout);
 				previewWrap.addClass(name + 'visible');
@@ -357,7 +354,11 @@
 				preview = $('<div class="' + name + '_preview"></div>').appendTo(previewWrap);
 			
 			wrap.width(editor.outerWidth());
-			preview.height(editor.outerHeight());
+			var previewHeight = opts.previewInitHeight;
+			if(previewHeight == "editorHeight") {
+				previewHeight = editor.outerHeight();
+			}
+			preview.height(previewHeight);
 
 			buildControls(opts, editor, controls);
 			controls.append(getPreviewControl(opts, editor, previewWrap));
@@ -377,6 +378,7 @@
 
 	$.fn.meltdown.defaults = {
 		examples: getExamples(),
+		previewInitHeight: "editorHeight", // A CSS height or "editorHeight". "" or undefined mean that the height adjusts to the content.
 		previewTimeout: 400
 	};
 
