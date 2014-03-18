@@ -144,8 +144,8 @@
 				control.children(':eq(0)').text('Hide preview');
 				control.addClass(name + '_preview-showing');
 			} else {
-				previewWrap.slideUp(options.previewTimeout);
-				previewWrap.stop().removeClass(name + 'visible');
+				previewWrap.stop().slideUp(options.previewTimeout);
+				previewWrap.removeClass(name + 'visible');
 				control.removeClass(name + '_preview-showing');
 				control.children(':eq(0)').text('Show preview');
 			}
