@@ -26,23 +26,23 @@
 		previewArea.html(mde(input.val()));
 	}
 
-	function addEventHandler(thees, example, control) {
+	function addEventHandler(editor, example, control) {
 		control.click(function (e) {
 			var text, selection, before, placeholder, after, lineStart, lineEnd, charBefore, charAfter;
 			before = example.before || "";
 			placeholder =  example.placeholder || "";
 			after = example.after || "";
-			if (typeof thees.surroundSelectedText !== 'undefined') {
-				text = thees.val();
-				selection = thees.getSelection();
+			if (typeof editor.surroundSelectedText !== 'undefined') {
+				text = editor.val();
+				selection = editor.getSelection();
 				if (example.lineSelect) {
 					lineStart = text.lastIndexOf('\n', selection.start) + 1;
 					lineEnd = text.indexOf('\n', selection.end);
 					if(lineEnd === -1) {
 						lineEnd = text.length;
 					}
-					thees.setSelection(lineStart, lineEnd);
-					selection = thees.getSelection();
+					editor.setSelection(lineStart, lineEnd);
+					selection = editor.getSelection();
 				}
 				if(selection.length > 0) {
 					placeholder = selection.text;
@@ -60,21 +60,21 @@
 					}
 				}
 				if (selection.text !== placeholder) {
-					thees.replaceSelectedText(placeholder, "select");
+					editor.replaceSelectedText(placeholder, "select");
 				}
-				thees.surroundSelectedText(before, after, "select");
+				editor.surroundSelectedText(before, after, "select");
 			} else {
 				debug('Failed to load surroundSelectedText');
-				thees.val(before + placeholder + after + "\n\n" + thees.val());
+				editor.val(before + placeholder + after + "\n\n" + editor.val());
 			}
 			e.preventDefault();
-			thees.focus();
-			thees.keyup();
+			editor.focus();
+			editor.keyup();
 		});
 	}
 
-	function buildControls(opts, thees, controls) {
-		var controlList, example, control, tuple, t, groupClass, group, outer, tmpThis;
+	function buildControls(opts, editor, controls) {
+		var controlList, example, control, tuple, t, groupClass, group, outer;
 		controlList = [];
 
 		for (example in opts.examples) {
@@ -88,7 +88,7 @@
 				}
 
 				control.children(":first").attr('title', example.altText);
-				addEventHandler(thees, example, control);
+				addEventHandler(editor, example, control);
 
 				tuple = {};
 				tuple.example = example;
@@ -129,7 +129,7 @@
 		}
 	}
 
-	function getAddExampleControl(options, thees, previewArea, example) {
+	function getAddExampleControl(options, editor, previewArea, example) {
 		var control = jQuery('<li><span>' + example.label + '</span></li>');
 		control.addClass(name + '_control');
 		if (typeof example.styleClass !== 'undefined') {
@@ -137,13 +137,13 @@
 		}
 		control.children(":first").attr('title', example.altText);
 		control.on('click', function () {
-			thees.val(example.markdown + "\n\n\n" + thees.val());
-			thees.keyup();
+			editor.val(example.markdown + "\n\n\n" + editor.val());
+			editor.keyup();
 		});
 		return control;
 	}
 
-	function getPreviewControl(options, thees, previewArea) {
+	function getPreviewControl(options, editor, previewArea) {
 		var control = jQuery('<li class="' + name + '_control ' + name + '_control-preview"><span title="Show preview">Show preview</span></li>');
 		control.on('click', function () {
 
@@ -152,7 +152,7 @@
 			}
 
 			if (!previewArea.is(':visible')) {
-				previewArea.find('.meltdown_preview').height(thees.outerHeight());
+				previewArea.find('.meltdown_preview').height(editor.outerHeight());
 				if (options.hasEffects) {
 					previewArea.slideToggle(options.previewTimeout);
 				} else {
@@ -161,7 +161,7 @@
 				previewArea.addClass(name + 'visible');
 				control.children(':eq(0)').text('Hide preview');
 				control.addClass(name + '_preview-showing');
-				update(previewArea.children(':eq(1)'), thees);
+				update(previewArea.children(':eq(1)'), editor);
 			} else {
 				if (options.hasEffects) {
 					previewArea.slideToggle(options.previewTimeout);
@@ -177,7 +177,7 @@
 	}
 
 	function getExamples() {
-		var key, examples, pounds, i, j;
+		var key, examples, pounds, i;
 		examples = {
 			bold: {
 				label: "B",
@@ -311,13 +311,13 @@
 	}
 
 	function addToolTip(wrap) {
-		var tip, preview;
+		var tip, controlPreview;
 
-		preview = wrap.find('.meltdown_control-preview');
 		if (typeof jQuery.qtip !== 'undefined') {
+			controlPreview = wrap.find('.meltdown_control-preview');
 			// Disable the preview
-			preview.addClass('disabled');
-			tip = preview.qtip({
+			controlPreview.addClass('disabled');
+			tip = controlPreview.qtip({
 				content: "Warning this feature is a tech preview feature.<br/>"
 						 + "There is a <a target=\"_blank\" href=\"https://github.com/iphands/Meltdown/issues/1\">known issue</a> with one of the libraries used to generate the live preview.<br/><br/>"
 						 + "Live previews <b>can</b> cause the browser tab to stop responding.<br/><br/>"
@@ -345,8 +345,8 @@
 					onRender: function () {
 						jQuery('.meltdown_control-preview-enabler').click(function () {
 							tip.qtip('destroy');
-							jQuery('.meltdown_control-preview').removeClass('disabled');
-							preview.click();
+							controlPreview.removeClass('disabled');
+							controlPreview.click();
 						});
 					}
 				},
@@ -367,39 +367,42 @@
 
 	jQuery.fn.meltdown = function (userOptions) {
 		return this.each(function () {
-			var defaults, opts, thees, wrap, previewWrap, preview, bar, controls;
-			defaults = jQuery.fn.meltdown.defaults;
-			opts = jQuery.extend(true, {}, defaults, userOptions);
-			opts.hasEffects = typeof jQuery.ui !== 'undefined';
+			var opts = jQuery.extend(true, {}, jQuery.fn.meltdown.defaults, userOptions);
+			opts.hasEffects = opts.hasEffects && typeof jQuery.ui !== 'undefined';
 
-			thees = jQuery(this);
-			thees.wrap('<div class="' + name + '_wrap" />');
-			thees.before('<div><div style="display: none;" class="' + name + '_preview-wrap"><span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span><div class="' + name + '_preview"></div></div></div><div class="meltdown_bar"><ul class="' + name + '_controls"></ul></div>');
-			wrap = thees.parent();
-			previewWrap = wrap.children(':eq(0)').children(':eq(0)'); /* wrapper for the preview area, but not where the updated content goes */
-			preview = previewWrap.children(':eq(1)'); /* preview area where updates happen */
-			bar = wrap.children(':eq(1)');
-			controls = bar.children().first();
+			// Prepare everything detached from the DOM:
+			var wrap = jQuery('<div class="' + name + '_wrap" />'),
+				editorWrap = jQuery('<div class="' + name + '_editor-wrap" />').appendTo(wrap),
+				bar = jQuery('<div class="meltdown_bar"></div>').appendTo(editorWrap),
+				controls = jQuery('<ul class="' + name + '_controls"></ul>').appendTo(bar),
+				editor = jQuery(this).addClass("meltdown_editor"),
+				previewWrap = jQuery('<div style="display: none;" class="' + name + '_preview-wrap"></div>').appendTo(wrap),
+				_previewHeader = jQuery('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(previewWrap),
+				preview = jQuery('<div class="' + name + '_preview"></div>').appendTo(previewWrap);
+			
+			wrap.width(editor.outerWidth());
+			preview.height(editor.outerHeight());
 
-			buildControls(opts, thees, controls);
-			controls.append(getPreviewControl(opts, thees, previewWrap));
+			buildControls(opts, editor, controls);
+			controls.append(getPreviewControl(opts, editor, previewWrap));
 
-			wrap.width(thees.outerWidth());
-			preview.height(thees.outerHeight());
+			addToolTip(wrap);
 
-			thees.on('keyup', function (event) {
+			editor.on('keyup', function (event) {
 				if (previewWrap.is(':visible')) {
-					update(preview, thees);
+					update(preview, editor);
 				}
 			});
 
-			addToolTip(wrap);
+			// Insert meltdown in the DOM:
+			editor.replaceWith(wrap).insertAfter(bar);
 		});
 	};
 
 	jQuery.fn.meltdown.defaults = {
 		examples: getExamples(),
-		previewTimeout: 400
+		previewTimeout: 400,
+		hasEffects: true
 	};
 
 }(jQuery));
