@@ -124,24 +124,12 @@
 	}
 
 	function getPreviewControl(meltdown) {
-		var previewWrap = meltdown.previewWrap,
-			control = $('<li class="' + name + '_control ' + name + '_control-preview"><span title="Toggle preview">Show preview</span></li>');
+		var control = '<li class="' + name + '_control ' + name + '_control-hidepreview"><span title="Show preview">Show preview</span></li>'
+					  + '<li class="' + name + '_control ' + name + '_control-showpreview"><span title="Hide preview">Hide preview</span></li>';
+		control = $(control);
 		control.on('click', function () {
-			if (control.hasClass('disabled')) {
-				return;
-			}
-
-			if (!previewWrap.is(':visible')) {
-				meltdown.update(true);
-				previewWrap.stop().slideDown(meltdown.options.previewTimeout);
-				previewWrap.addClass(name + 'visible');
-				control.children(':eq(0)').text('Hide preview');
-				control.addClass(name + '_preview-showing');
-			} else {
-				previewWrap.stop().slideUp(meltdown.options.previewTimeout);
-				previewWrap.removeClass(name + 'visible');
-				control.removeClass(name + '_preview-showing');
-				control.children(':eq(0)').text('Show preview');
+			if (!control.hasClass('disabled')) {
+				meltdown.togglePreview();
 			}
 		});
 		return control;
@@ -366,7 +354,8 @@
 	// Default meltdown initialization options:
 	$.fn.meltdown.defaults = {
 		examples: getExamples(),
-		previewInitHeight: "editorHeight", // A CSS height or "editorHeight". "" or undefined mean that the height adjusts to the content.
+		autoOpenPreview: true,
+		previewInitHeight: "editorHeight", // A CSS height or "editorHeight". "" mean that the height adjusts to the content.
 		previewTimeout: 400
 	};
 	
@@ -382,22 +371,22 @@
 			var options = this.options = $.extend(true, {}, $.fn.meltdown.defaults, userOptions);
 			
 			// Setup everything detached from the document:
-			this.wrap = $('<div class="' + name + '_wrap" />');
+			this.wrap = $('<div class="' + name + '_wrap ' + name + 'previewvisible" />');
 			this.editorWrap =  $('<div class="' + name + '_editor-wrap" />').appendTo(this.wrap);
 			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.editorWrap);
 			this.controls =  $('<ul class="' + name + '_controls"></ul>').appendTo(this.bar);
 			this.editor = this.element.addClass("meltdown_editor");
-			this.previewWrap =  $('<div style="display: none;" class="' + name + '_preview-wrap"></div>').appendTo(this.wrap);
+			this.previewWrap =  $('<div class="' + name + '_preview-wrap"></div>').appendTo(this.wrap);
 			this.previewHeader =  $('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
 			this.preview =  $('<div class="' + name + '_preview"></div>').appendTo(this.previewWrap);
 			
 			// Setup meltdown sizes:
 			this.wrap.width(this.editor.outerWidth());
 			var previewHeight = options.previewInitHeight;
-			if (previewHeight == "editorHeight") {
+			if (previewHeight === "editorHeight") {
 				previewHeight = this.editor.outerHeight();
 			}
-			this.preview.height(this.previewHeight);
+			this.preview.height(previewHeight);
 			
 			// Build toolbar:
 			buildControls(options, this.editor, this.controls);
@@ -407,16 +396,55 @@
 			// Setup live update:
 			this.editor.on('keyup', $.proxy(this.update, this));
 			
+			// Setup state:
+			if (options.autoOpenPreview) {
+				this.update(true);
+			}
+			else {
+				this.togglePreview(false, 0);
+			}
+			
 			// Insert meltdown in the document:
 			this.editor.after(this.wrap).insertAfter(this.bar);
 			
 			return this;	// Chaining
 		},
 		update: function(force) {
-			if (force === true || this.previewWrap.is(':visible')) {
+			if (force === true || this.isPreviewVisible()) {
 				this.preview.html(Markdown(this.editor.val()));
 			}
 			return this;	// Chaining
+		},
+		isPreviewVisible: function() {
+			return this.wrap.hasClass(name + 'previewvisible');
+		},
+		togglePreview: function(show, duration) {
+			var isVisible = this.isPreviewVisible();
+			if (show === isVisible) {
+				return this;
+			}
+			if (show === undefined) {
+				show = !isVisible;
+			}
+			if (duration === undefined) {
+				duration = this.options.previewTimeout;
+			}
+			
+			if (show) {
+				this.update(true);
+				this.previewWrap.stop().slideDown(duration);
+				this.wrap.removeClass(name + 'previewinvisible').addClass(name + 'previewvisible');
+			} else {
+				if (this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
+					this.previewWrap.stop().slideUp(duration);
+				}
+				else {
+					this.previewWrap.stop().hide();
+				}
+				this.wrap.removeClass(name + 'previewvisible').addClass(name + 'previewinvisible');
+			}
+			
+			return this;
 		}
 	});
 
