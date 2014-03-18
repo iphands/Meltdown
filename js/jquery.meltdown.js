@@ -371,7 +371,7 @@
 			});
 
 			// Insert meltdown in the DOM:
-			editor.replaceWith(wrap).insertAfter(bar);
+			editor.after(wrap).insertAfter(bar);
 		});
 	};
 
