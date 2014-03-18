@@ -6,7 +6,7 @@
  * Requires: jQuery v1.7.2 or later
  */
 
-(function (jQuery) {
+(function ($, window, undefined) {
 	'use strict';
 
 	var ver, name, dbg;
@@ -15,15 +15,15 @@
 	dbg = true;
 
 	function debug(msg) {
-		if ((typeof console !== 'undefined') && (dbg === true)) {
+		if (window.console && dbg) {
 			console.log(msg);
 		}
 	}
 
-	function update(previewArea, input) {
-		var mde = Markdown;
-		previewArea.height(input.outerHeight());
-		previewArea.html(mde(input.val()));
+	function update(preview, editor) {
+			var mde = Markdown;
+			preview.height(input.outerHeight());
+			preview.html(mde(input.val()));
 	}
 
 	function addEventHandler(editor, example, control) {
@@ -32,7 +32,7 @@
 			before = example.before || "";
 			placeholder =  example.placeholder || "";
 			after = example.after || "";
-			if (typeof editor.surroundSelectedText !== 'undefined') {
+			if (editor.surroundSelectedText) {
 				text = editor.val();
 				selection = editor.getSelection();
 				if (example.lineSelect) {
@@ -81,9 +81,9 @@
 			if (opts.examples.hasOwnProperty(example)) {
 				example = opts.examples[example];
 
-				control = jQuery('<li><span>' + example.label + '</span></li>');
+				control = $('<li><span>' + example.label + '</span></li>');
 				control.addClass(name + '_control');
-				if (typeof example.styleClass !== 'undefined') {
+				if (example.styleClass) {
 					control.addClass(example.styleClass);
 				}
 
@@ -99,7 +99,7 @@
 
 		function addClickHandler(outer) {
 			outer.on('click', function () {
-                var element = jQuery(this);
+                var element = $(this);
 				element.siblings('li').removeClass(name + '_controlgroup-open').children('ul').hide();
 				element.toggleClass(name + '_controlgroup-open').children('ul').toggle();
 			});
@@ -111,9 +111,9 @@
 				if (t.example.group && t.example.groupLabel) {
 					groupClass = name + "_controlgroup-" + t.example.group;
 					group = controls.find("ul." + groupClass);
-					outer = jQuery('<li />');
+					outer = $('<li />');
 					if (group.length === 0) {
-						group = jQuery('<ul style="display: none;" />');
+						group = $('<ul style="display: none;" />');
 						group.addClass(name + '_controlgroup-dropdown ' + groupClass);
 						outer.addClass(name + '_controlgroup ' + groupClass);
 						outer.append('<span>' + t.example.groupLabel + ' <i class="meltdown-icon-caret-down"></i></span><b></b>');
@@ -129,46 +129,23 @@
 		}
 	}
 
-	function getAddExampleControl(options, editor, previewArea, example) {
-		var control = jQuery('<li><span>' + example.label + '</span></li>');
-		control.addClass(name + '_control');
-		if (typeof example.styleClass !== 'undefined') {
-			control.addClass(example.styleClass);
-		}
-		control.children(":first").attr('title', example.altText);
+	function getPreviewControl(options, editor, previewWrap) {
+		var control = $('<li class="' + name + '_control ' + name + '_control-preview"><span title="Toggle preview">Show preview</span></li>');
 		control.on('click', function () {
-			editor.val(example.markdown + "\n\n\n" + editor.val());
-			editor.keyup();
-		});
-		return control;
-	}
-
-	function getPreviewControl(options, editor, previewArea) {
-		var control = jQuery('<li class="' + name + '_control ' + name + '_control-preview"><span title="Show preview">Show preview</span></li>');
-		control.on('click', function () {
-
 			if (control.hasClass('disabled')) {
 				return;
 			}
 
-			if (!previewArea.is(':visible')) {
-				previewArea.find('.meltdown_preview').height(editor.outerHeight());
-				if (options.hasEffects) {
-					previewArea.slideToggle(options.previewTimeout);
-				} else {
-					previewArea.fadeIn();
-				}
-				previewArea.addClass(name + 'visible');
+			if (!previewWrap.is(':visible')) {
+				previewWrap.find('.meltdown_preview').height(editor.outerHeight());
+				update(previewWrap.children(':eq(1)'), editor);
+				previewWrap.stop().slideDown(options.previewTimeout);
+				previewWrap.addClass(name + 'visible');
 				control.children(':eq(0)').text('Hide preview');
 				control.addClass(name + '_preview-showing');
-				update(previewArea.children(':eq(1)'), editor);
 			} else {
-				if (options.hasEffects) {
-					previewArea.slideToggle(options.previewTimeout);
-				} else {
-					previewArea.fadeOut();
-				}
-				previewArea.removeClass(name + 'visible');
+				previewWrap.slideUp(options.previewTimeout);
+				previewWrap.stop().removeClass(name + 'visible');
 				control.removeClass(name + '_preview-showing');
 				control.children(':eq(0)').text('Show preview');
 			}
@@ -278,7 +255,7 @@
 			altText: "Inline Code",
 			before: "`",
 			placeholder: "code",
-			after: "`",
+			after: "`"
 		};
 
 		examples.footnote = {
@@ -313,7 +290,7 @@
 	function addToolTip(wrap) {
 		var tip, controlPreview;
 
-		if (typeof jQuery.qtip !== 'undefined') {
+		if ($.qtip) {
 			controlPreview = wrap.find('.meltdown_control-preview');
 			// Disable the preview
 			controlPreview.addClass('disabled');
@@ -343,7 +320,7 @@
 				},
 				api: {
 					onRender: function () {
-						jQuery('.meltdown_control-preview-enabler').click(function () {
+						$('.meltdown_control-preview-enabler').click(function () {
 							tip.qtip('destroy');
 							controlPreview.removeClass('disabled');
 							controlPreview.click();
@@ -365,20 +342,19 @@
 		}
 	}
 
-	jQuery.fn.meltdown = function (userOptions) {
+	$.fn.meltdown = function (options) {
 		return this.each(function () {
-			var opts = jQuery.extend(true, {}, jQuery.fn.meltdown.defaults, userOptions);
-			opts.hasEffects = opts.hasEffects && typeof jQuery.ui !== 'undefined';
+			var opts = $.extend(true, {}, $.fn.meltdown.defaults, options);
 
 			// Prepare everything detached from the DOM:
-			var wrap = jQuery('<div class="' + name + '_wrap" />'),
-				editorWrap = jQuery('<div class="' + name + '_editor-wrap" />').appendTo(wrap),
-				bar = jQuery('<div class="meltdown_bar"></div>').appendTo(editorWrap),
-				controls = jQuery('<ul class="' + name + '_controls"></ul>').appendTo(bar),
-				editor = jQuery(this).addClass("meltdown_editor"),
-				previewWrap = jQuery('<div style="display: none;" class="' + name + '_preview-wrap"></div>').appendTo(wrap),
-				_previewHeader = jQuery('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(previewWrap),
-				preview = jQuery('<div class="' + name + '_preview"></div>').appendTo(previewWrap);
+			var wrap = $('<div class="' + name + '_wrap" />'),
+				editorWrap = $('<div class="' + name + '_editor-wrap" />').appendTo(wrap),
+				bar = $('<div class="meltdown_bar"></div>').appendTo(editorWrap),
+				controls = $('<ul class="' + name + '_controls"></ul>').appendTo(bar),
+				editor = $(this).addClass("meltdown_editor"),
+				previewWrap = $('<div style="display: none;" class="' + name + '_preview-wrap"></div>').appendTo(wrap),
+				_previewHeader = $('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(previewWrap),
+				preview = $('<div class="' + name + '_preview"></div>').appendTo(previewWrap);
 			
 			wrap.width(editor.outerWidth());
 			preview.height(editor.outerHeight());
@@ -399,10 +375,9 @@
 		});
 	};
 
-	jQuery.fn.meltdown.defaults = {
+	$.fn.meltdown.defaults = {
 		examples: getExamples(),
-		previewTimeout: 400,
-		hasEffects: true
+		previewTimeout: 400
 	};
 
-}(jQuery));
+}(jQuery, window));
