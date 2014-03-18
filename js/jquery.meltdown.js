@@ -20,10 +20,6 @@
 		}
 	}
 
-	function update(preview, editor) {
-		preview.html(Markdown(editor.val()));
-	}
-
 	function addEventHandler(editor, example, control) {
 		control.click(function (e) {
 			var text, selection, before, placeholder, after, lineStart, lineEnd, charBefore, charAfter;
@@ -71,13 +67,13 @@
 		});
 	}
 
-	function buildControls(opts, editor, controls) {
+	function buildControls(options, editor, controls) {
 		var controlList, example, control, tuple, t, groupClass, group, outer;
 		controlList = [];
 
-		for (example in opts.examples) {
-			if (opts.examples.hasOwnProperty(example)) {
-				example = opts.examples[example];
+		for (example in options.examples) {
+			if (options.examples.hasOwnProperty(example)) {
+				example = options.examples[example];
 
 				control = $('<li><span>' + example.label + '</span></li>');
 				control.addClass(name + '_control');
@@ -127,21 +123,22 @@
 		}
 	}
 
-	function getPreviewControl(options, editor, previewWrap) {
-		var control = $('<li class="' + name + '_control ' + name + '_control-preview"><span title="Toggle preview">Show preview</span></li>');
+	function getPreviewControl(meltdown) {
+		var previewWrap = meltdown.previewWrap,
+			control = $('<li class="' + name + '_control ' + name + '_control-preview"><span title="Toggle preview">Show preview</span></li>');
 		control.on('click', function () {
 			if (control.hasClass('disabled')) {
 				return;
 			}
 
 			if (!previewWrap.is(':visible')) {
-				update(previewWrap.children(':eq(1)'), editor);
-				previewWrap.stop().slideDown(options.previewTimeout);
+				meltdown.update(true);
+				previewWrap.stop().slideDown(meltdown.options.previewTimeout);
 				previewWrap.addClass(name + 'visible');
 				control.children(':eq(0)').text('Hide preview');
 				control.addClass(name + '_preview-showing');
 			} else {
-				previewWrap.stop().slideUp(options.previewTimeout);
+				previewWrap.stop().slideUp(meltdown.options.previewTimeout);
 				previewWrap.removeClass(name + 'visible');
 				control.removeClass(name + '_preview-showing');
 				control.children(':eq(0)').text('Show preview');
@@ -338,48 +335,89 @@
 			});
 		}
 	}
-
-	$.fn.meltdown = function (options) {
-		return this.each(function () {
-			var opts = $.extend(true, {}, $.fn.meltdown.defaults, options);
-
-			// Prepare everything detached from the DOM:
-			var wrap = $('<div class="' + name + '_wrap" />'),
-				editorWrap = $('<div class="' + name + '_editor-wrap" />').appendTo(wrap),
-				bar = $('<div class="meltdown_bar"></div>').appendTo(editorWrap),
-				controls = $('<ul class="' + name + '_controls"></ul>').appendTo(bar),
-				editor = $(this).addClass("meltdown_editor"),
-				previewWrap = $('<div style="display: none;" class="' + name + '_preview-wrap"></div>').appendTo(wrap),
-				_previewHeader = $('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(previewWrap),
-				preview = $('<div class="' + name + '_preview"></div>').appendTo(previewWrap);
-			
-			wrap.width(editor.outerWidth());
-			var previewHeight = opts.previewInitHeight;
-			if(previewHeight == "editorHeight") {
-				previewHeight = editor.outerHeight();
+	
+	$.fn.meltdown = function (arg) {
+		// Get method name and method arguments:
+		var methodName = $.type(arg) === "string" ? arg : "init",
+			args = Array.prototype.slice.call(arguments, methodName === "init" ? 0 : 1);
+		
+		// Dispatch method call:
+		for (var elem, meltdown, returnValue,	i = 0; i < this.length; i++) {
+			elem = this[i];
+			// Get the Meltdown object or create it:
+			meltdown = $.data(elem, "Meltdown");
+			if (methodName === "init") {
+				if(meltdown) continue;	// Don't re-init it.
+				meltdown = new Meltdown(elem);
+				$.data(elem, "Meltdown", meltdown);
 			}
-			preview.height(previewHeight);
-
-			buildControls(opts, editor, controls);
-			controls.append(getPreviewControl(opts, editor, previewWrap));
-
-			addToolTip(wrap);
-
-			editor.on('keyup', function (event) {
-				if (previewWrap.is(':visible')) {
-					update(preview, editor);
-				}
-			});
-
-			// Insert meltdown in the DOM:
-			editor.after(wrap).insertAfter(bar);
-		});
+			// Call the method:
+			returnValue = meltdown[methodName].apply(meltdown, args);
+			// If the method is a getter, return the value
+			// (See: http://bililite.com/blog/2009/04/23/improving-jquery-ui-widget-getterssetters/)
+			if (returnValue !== meltdown) {
+				return returnValue;
+			}
+		}
+		
+		return this;	// Chaining
 	};
-
+	
+	// Default meltdown initialization options:
 	$.fn.meltdown.defaults = {
 		examples: getExamples(),
 		previewInitHeight: "editorHeight", // A CSS height or "editorHeight". "" or undefined mean that the height adjusts to the content.
 		previewTimeout: 400
 	};
+	
+	// The Meltdown base class:
+	var Meltdown = $.fn.meltdown.Meltdown = function(elem) {
+			this.element = $(elem);
+		};
+	
+	// The Meltdown methods.
+	// Methods are publicly available: elem.meltdown("methodName", args...)
+	$.fn.meltdown.methods = $.extend(Meltdown.prototype, {
+		init: function(userOptions) {
+			var options = this.options = $.extend(true, {}, $.fn.meltdown.defaults, userOptions);
+			
+			// Setup everything detached from the document:
+			this.wrap = $('<div class="' + name + '_wrap" />');
+			this.editorWrap =  $('<div class="' + name + '_editor-wrap" />').appendTo(this.wrap);
+			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.editorWrap);
+			this.controls =  $('<ul class="' + name + '_controls"></ul>').appendTo(this.bar);
+			this.editor = this.element.addClass("meltdown_editor");
+			this.previewWrap =  $('<div style="display: none;" class="' + name + '_preview-wrap"></div>').appendTo(this.wrap);
+			this.previewHeader =  $('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
+			this.preview =  $('<div class="' + name + '_preview"></div>').appendTo(this.previewWrap);
+			
+			// Setup meltdown sizes:
+			this.wrap.width(this.editor.outerWidth());
+			var previewHeight = options.previewInitHeight;
+			if (previewHeight == "editorHeight") {
+				previewHeight = this.editor.outerHeight();
+			}
+			this.preview.height(this.previewHeight);
+			
+			// Build toolbar:
+			buildControls(options, this.editor, this.controls);
+			this.controls.append(getPreviewControl(this));
+			addToolTip(this.wrap);
+			
+			// Setup live update:
+			this.editor.on('keyup', $.proxy(this.update, this));
+			
+			// Insert meltdown in the document:
+			this.editor.after(this.wrap).insertAfter(this.bar);
+			
+			return this;	// Chaining
+		},
+		update: function(force) {
+			if (force === true || this.previewWrap.is(':visible')) {
+				this.preview.html(Markdown(this.editor.val()));
+			}
+			return this;	// Chaining
+		}
+	});
 
 }(jQuery, window));
