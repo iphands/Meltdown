@@ -324,6 +324,20 @@
 		}
 	}
 	
+	function debounce(func, wait, returnValue) {
+		var context, args, timeout,
+			exec = function() {
+				func.apply(context, args);
+			};
+		return function() {
+			context = this;
+			args = arguments;
+			clearTimeout(timeout);
+			timeout = setTimeout(exec, wait);
+			return returnValue;
+		};
+	}
+	
 	$.fn.meltdown = function (arg) {
 		// Get method name and method arguments:
 		var methodName = $.type(arg) === "string" ? arg : "init",
@@ -393,8 +407,9 @@
 			this.controls.append(getPreviewControl(this));
 			addToolTip(this.wrap);
 			
-			// Setup live update:
-			this.editor.on('keyup', $.proxy(this.update, this));
+			// Setup update:
+			this.debouncedUpdate = debounce(this.update, 350, this);
+			this.editor.on('keyup', $.proxy(this.debouncedUpdate, this));
 			
 			// Setup state:
 			if (options.autoOpenPreview) {
