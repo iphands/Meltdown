@@ -112,20 +112,27 @@ you can use the generic selector below, but it's slower:
 	margin: 5px 0;
 }
 
-.meltdown_editor {
-	display: block;	/* Removes the bottom space. */
-	margin: 0 !important;
-	padding: 5px;
+.meltdown_editor-deco {
 	border: 1px solid #a8a8a8;
+	padding: 5px;
+	background: #fff;
 	-moz-border-radius: 3px;
 	-webkit-border-radius: 3px;
 	border-radius: 3px;
-	resize: vertical;
 }
-.meltdown_editor:focus {
+.meltdown_editor-deco.focus {
 	outline: none;
 	border-color: #5c8cd0;
 }
+
+.meltdown_editor {
+	display: block;	/* Removes the bottom space. */
+	margin: 0;
+	border: 0;
+	width: 100%;
+	resize: vertical;
+}
+
 
 /* Meltdown Toolbar
 =======================================================================*/
@@ -379,4 +386,22 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 }
 .meltdownvisible .meltdown_preview {
 	
+}
+
+
+/* Fullscreen
+=======================================================================*/
+
+.meltdown_wrap.fullscreen {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	width: auto !important;
+	margin: 0;
+	-moz-border-radius: 0;
+	-webkit-border-radius: 0;
+	border-radius: 0;
+	z-index: 1000;
 }

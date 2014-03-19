@@ -382,20 +382,24 @@
 	// Methods are publicly available: elem.meltdown("methodName", args...)
 	$.fn.meltdown.methods = $.extend(Meltdown.prototype, {
 		init: function(userOptions) {
-			var options = this.options = $.extend(true, {}, $.fn.meltdown.defaults, userOptions);
+			var self = this,
+				options = this.options = $.extend(true, {}, $.fn.meltdown.defaults, userOptions);
+			
+			this.editorOriginalWidth = this.element.outerWidth();
 			
 			// Setup everything detached from the document:
 			this.wrap = $('<div class="' + name + '_wrap ' + name + 'previewvisible" />');
 			this.editorWrap =  $('<div class="' + name + '_editor-wrap" />').appendTo(this.wrap);
 			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.editorWrap);
 			this.controls =  $('<ul class="' + name + '_controls"></ul>').appendTo(this.bar);
+			this.editorDeco =  $('<div class="' + name + '_editor-deco" />').appendTo(this.editorWrap);
 			this.editor = this.element.addClass("meltdown_editor");
 			this.previewWrap =  $('<div class="' + name + '_preview-wrap"></div>').appendTo(this.wrap);
 			this.previewHeader =  $('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
 			this.preview =  $('<div class="' + name + '_preview"></div>').appendTo(this.previewWrap);
 			
 			// Setup meltdown sizes:
-			this.wrap.width(this.editor.outerWidth());
+			this.wrap.width(this.editorOriginalWidth);
 			var previewHeight = options.previewInitHeight;
 			if (previewHeight === "editorHeight") {
 				previewHeight = this.editor.outerHeight();
@@ -407,11 +411,17 @@
 			this.controls.append(getPreviewControl(this));
 			addToolTip(this.wrap);
 			
+			this.editor.focus(function() {
+				self.editorDeco.addClass("focus");
+			}).blur(function() {
+				self.editorDeco.removeClass("focus");
+			});
+			
 			// Setup update:
 			this.debouncedUpdate = debounce(this.update, 350, this);
 			this.editor.on('keyup', $.proxy(this.debouncedUpdate, this));
 			
-			// Setup state:
+			// Setup initial state:
 			if (options.autoOpenPreview) {
 				this.update(true);
 			}
@@ -420,7 +430,7 @@
 			}
 			
 			// Insert meltdown in the document:
-			this.editor.after(this.wrap).insertAfter(this.bar);
+			this.editor.after(this.wrap).appendTo(this.editorDeco);
 			
 			return this;	// Chaining
 		},
@@ -459,6 +469,26 @@
 					this.previewWrap.stop().hide();
 				}
 				this.wrap.removeClass(name + 'previewvisible').addClass(name + 'previewinvisible');
+			}
+			
+			return this;
+		},
+		isFullscreen: function() {
+			return this.wrap.hasClass('fullscreen');
+		},
+		toggleFullscreen: function(full) {
+			var isFullscreen = this.isFullscreen();
+			if (full === isFullscreen) {
+				return this;
+			}
+			if (full === undefined) {
+				full = !isFullscreen;
+			}
+			
+			if (full) {
+				this.wrap.addClass('fullscreen');
+			} else {
+				this.wrap.removeClass('fullscreen');
 			}
 			
 			return this;
