@@ -410,8 +410,10 @@
 			return this;	// Chaining
 		},
 		update: function(force) {
-			if (force === true || this.isPreviewVisible()) {
-				this.preview.html(Markdown(this.editor.val()));
+			var src = this.editor.val();
+			if (force === true || (this.isPreviewVisible() && src !== this.lastSrc)) {
+				this.preview.html(Markdown(src));
+				this.lastSrc = src;
 			}
 			return this;	// Chaining
 		},
@@ -431,9 +433,9 @@
 			}
 			
 			if (show) {
-				this.update(true);
-				this.previewWrap.stop().slideDown(duration);
 				this.wrap.removeClass(name + 'previewinvisible').addClass(name + 'previewvisible');
+				this.update();
+				this.previewWrap.stop().slideDown(duration);
 			} else {
 				if (this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
 					this.previewWrap.stop().slideUp(duration);
