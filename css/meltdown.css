@@ -1,15 +1,41 @@
+/* Prevent text selection while mouse dragging.
+   (See: http://blog.herdhound.com/2012/02/prevent-text-selection-during-mousemove.html) */
+.unselectable * {
+-webkit-user-select: none;
+-khtml-user-select: none;
+-moz-user-select: none;
+-o-user-select: none;
+user-select: none;
+}
+
+
 /* Meltdown Wrap
 =======================================================================*/
 
 .meltdown_wrap {
 	position: relative;
 	margin-bottom: 10px;
-	padding: 1px 5px;
+	padding: 0 5px;
 	background: #c8c8c8;
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
+	resize: vertical;
+	overflow: hidden;
 }
+
+/* Allow the margins to collapse with the other childrens of .meltdown_wrap: */
+.meltdown_topmargin {
+	margin-bottom: 5px;
+}
+.meltdown_bottommargin {
+	margin-top: 5px;
+}
+
+.meltdown_handle {
+	cursor: ns-resize;
+}
+
 
 /* Meltdown Font Icons
 =======================================================================*/
@@ -104,6 +130,7 @@ you can use the generic selector below, but it's slower:
 	content: "\2b";
 }
 
+
 /* Meltdown Editor
 =======================================================================*/
 
@@ -130,7 +157,8 @@ you can use the generic selector below, but it's slower:
 	margin: 0;
 	border: 0;
 	width: 100%;
-	resize: vertical;
+	resize: none;
+	min-height: 15px;
 }
 
 
@@ -335,7 +363,7 @@ li.meltdown_controlgroup li {
 }
 .meltdown_controls li.meltdown_controlgroup-kitchenSink li { float: left; margin-left: 5px; }
 li.meltdown_controlgroup li span { display: block; float: none; }
-	
+
 
 /* Meltdown Preview
 =======================================================================*/
@@ -382,7 +410,7 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	-moz-border-radius-bottomleft: 3px;
 	border-bottom-right-radius: 3px;
 	border-bottom-left-radius: 3px;
-	resize: vertical;
+	min-height: 15px;
 }
 .meltdownvisible .meltdown_preview {
 	
@@ -393,15 +421,44 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 =======================================================================*/
 
 .meltdown_wrap.fullscreen {
-	position: absolute;
+	position: fixed;
 	top: 0;
 	right: 0;
 	bottom: 0;
 	left: 0;
 	width: auto !important;
+	height: auto !important;
 	margin: 0;
 	-moz-border-radius: 0;
 	-webkit-border-radius: 0;
 	border-radius: 0;
 	z-index: 1000;
+	resize: none;
+}
+
+
+/* element_resize_detection.js
+   Source: http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/
+=======================================================================*/
+
+.resize-triggers {
+	visibility: hidden;
+}
+.resize-triggers, .resize-triggers > div, .contract-trigger:before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+.resize-triggers > div {
+  background: #eee;
+  overflow: auto;
+}
+.contract-trigger:before {
+  width: 200%;
+  height: 200%;
 }

@@ -1,4 +1,4 @@
-/*global jQuery, console, Markdown*/
+/*global jQuery, console, Markdown, addResizeListener*/
 
 /*
  * Meltdown (Markup Extra Live Toolbox)
@@ -6,13 +6,16 @@
  * Requires: jQuery v1.7.2 or later
  */
 
-(function ($, window, undefined) {
+(function ($, window, document, undefined) {
 	'use strict';
 
 	var ver, name, dbg;
 	ver = '0.1';
 	name = 'meltdown';
 	dbg = true;
+	
+	var body = $("body"),
+		doc = $(document);
 
 	function debug(msg) {
 		if (window.console && dbg) {
@@ -324,6 +327,44 @@
 		}
 	}
 	
+	// Setup event handlers for the resize handle:
+	function setupResizeHandle(resizeHandle, meltdown) {
+		var firstElem, lastElem, startY, minY, maxY, originalFirstElemHeight, originalLastElemHeight;
+		var moveEventHandler = function(e) {
+				var delta = Math.min(Math.max(e.pageY , minY), maxY) - startY,
+					firstElemHeight = originalFirstElemHeight + delta,
+					lastElemHeight = originalLastElemHeight - delta;
+				firstElem.height(firstElemHeight);
+				lastElem.height(lastElemHeight);
+				
+				var editorHeight = firstElem[0] === meltdown.editor[0] ? firstElemHeight : lastElemHeight;
+				meltdown.lastEditorPercentHeight = editorHeight / (firstElemHeight + lastElemHeight);
+			};
+		// Init dragging handlers only on mousedown:
+		resizeHandle.on("mousedown", function(e) {
+			// Sort elems in document order:
+			var elems = meltdown.editor.add(meltdown.preview);
+			// The first elem is assumed to be before resizeHandle, and the last is after:
+			firstElem = elems.first();
+			lastElem = elems.last();
+			
+			// Init dragging properties:
+			startY = e.pageY;
+			originalFirstElemHeight = firstElem.height();
+			originalLastElemHeight = lastElem.height();
+			minY = startY - originalFirstElemHeight + 15;
+			maxY = startY + originalLastElemHeight - 15;
+			
+			// Setup event handlers:
+			doc.on("mousemove", moveEventHandler).one("mouseup", function() {
+				doc.off("mousemove", moveEventHandler);
+				body.removeClass("unselectable");
+			});
+			// Prevent text selection while dragging:
+			body.addClass("unselectable");
+		});
+	}
+	
 	function debounce(func, wait, returnValue) {
 		var context, args, timeout,
 			exec = function() {
@@ -338,6 +379,18 @@
 		};
 	}
 	
+	// Return true, false or undefined.
+	// If newState is undefined or not a boolean, return !state (this is the toggle action)
+	// If newState === state, return undefined (to tell that no state change is required)
+	function checkToggleState(newState, state) {
+		if (newState !== true && newState !== false) {
+			return !state;
+		}
+		if (newState === state) {
+			return undefined;
+		}
+	}
+	
 	$.fn.meltdown = function (arg) {
 		// Get method name and method arguments:
 		var methodName = $.type(arg) === "string" ? arg : "init",
@@ -349,7 +402,7 @@
 			// Get the Meltdown object or create it:
 			meltdown = $.data(elem, "Meltdown");
 			if (methodName === "init") {
-				if(meltdown) continue;	// Don't re-init it.
+				if (meltdown) continue;	// Don't re-init it.
 				meltdown = new Meltdown(elem);
 				$.data(elem, "Meltdown", meltdown);
 			}
@@ -369,7 +422,7 @@
 	$.fn.meltdown.defaults = {
 		examples: getExamples(),
 		autoOpenPreview: true,
-		previewInitHeight: "editorHeight", // A CSS height or "editorHeight". "" mean that the height adjusts to the content.
+		previewHeight: "editorHeight", // A CSS height or "editorHeight". "" mean that the height adjusts to the content.
 		previewTimeout: 400
 	};
 	
@@ -385,10 +438,11 @@
 			var self = this,
 				options = this.options = $.extend(true, {}, $.fn.meltdown.defaults, userOptions);
 			
-			this.editorOriginalWidth = this.element.outerWidth();
+			this.editorPreInitWidth = this.element.outerWidth();
 			
 			// Setup everything detached from the document:
 			this.wrap = $('<div class="' + name + '_wrap ' + name + 'previewvisible" />');
+			this.topmargin = $('<div class="' + name + '_topmargin"/>').appendTo(this.wrap);
 			this.editorWrap =  $('<div class="' + name + '_editor-wrap" />').appendTo(this.wrap);
 			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.editorWrap);
 			this.controls =  $('<ul class="' + name + '_controls"></ul>').appendTo(this.bar);
@@ -397,13 +451,14 @@
 			this.previewWrap =  $('<div class="' + name + '_preview-wrap"></div>').appendTo(this.wrap);
 			this.previewHeader =  $('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
 			this.preview =  $('<div class="' + name + '_preview"></div>').appendTo(this.previewWrap);
+			this.bottommargin = $('<div class="' + name + '_bottommargin"/>').appendTo(this.wrap);
 			
 			// Setup meltdown sizes:
-			this.wrap.width(this.editorOriginalWidth);
-			var previewHeight = options.previewInitHeight;
+			var previewHeight = options.previewHeight;
 			if (previewHeight === "editorHeight") {
 				previewHeight = this.editor.outerHeight();
 			}
+			this.wrap.width(this.editorPreInitWidth);
 			this.preview.height(previewHeight);
 			
 			// Build toolbar:
@@ -411,11 +466,14 @@
 			this.controls.append(getPreviewControl(this));
 			addToolTip(this.wrap);
 			
+			// editorDeco's CSS need a bit of help:
 			this.editor.focus(function() {
 				self.editorDeco.addClass("focus");
 			}).blur(function() {
 				self.editorDeco.removeClass("focus");
 			});
+			
+			setupResizeHandle(this.previewHeader.addClass("meltdown_handle"), this);
 			
 			// Setup update:
 			this.debouncedUpdate = debounce(this.update, 350, this);
@@ -424,13 +482,34 @@
 			// Setup initial state:
 			if (options.autoOpenPreview) {
 				this.update(true);
+			} else {
+				this.previewWrap.hide();
+				this.wrap.removeClass(name + 'previewvisible').addClass(name + 'previewinvisible');
 			}
-			else {
-				this.togglePreview(false, 0);
-			}
+			
+			// Store datas needed by fullscreen mode:
+			this.fullscreenData = {};
 			
 			// Insert meltdown in the document:
 			this.editor.after(this.wrap).appendTo(this.editorDeco);
+			var editorHeight = this.editor.height();
+			previewHeight = this.preview.height();
+			
+			// Define the wrap min height from the editor and the preview min heights:
+			var wrapHeight = this.wrap.height(),
+				minHeights = parseFloat(this.editor.css("minHeight")) + parseFloat(this.preview.css("minHeight"));
+			this.wrap.css("minHeight", wrapHeight - editorHeight - previewHeight + minHeights);
+			
+			// Setup editor and preview resizing when wrap is resized:
+			this.lastEditorPercentHeight = editorHeight / (editorHeight + previewHeight);
+			this.lastWrapHeight = wrapHeight;
+			addResizeListener(this.wrap[0], function() {
+				var newHeight = self.wrap.height();
+				if (newHeight !== self.lastWrapHeight) {
+					self.adjustHeights(newHeight);
+					self.lastWrapHeight = newHeight;
+				}
+			});
 			
 			return this;	// Chaining
 		},
@@ -446,27 +525,57 @@
 			return this.wrap.hasClass(name + 'previewvisible');
 		},
 		togglePreview: function(show, duration) {
-			var isVisible = this.isPreviewVisible();
-			if (show === isVisible) {
-				return this;
-			}
+			show = checkToggleState(show, this.isPreviewVisible());
 			if (show === undefined) {
-				show = !isVisible;
+				return this;
 			}
 			if (duration === undefined) {
 				duration = this.options.previewTimeout;
 			}
 			
+			// Set height to prevent changes during animation:
+			var originalWrapStyleHeight = this.wrap[0].style.height;
+			this.wrap.height("+=0");
+			
+			// Function to resize the editor when the preview is resized:
+			var self = this,
+				editorHeight = this.editor.height(),
+				previewWrapMargin = parseFloat(this.previewWrap.css("marginTop")),
+				previewWrapHeight = show ? -previewWrapMargin : this.previewWrap.outerHeight(),
+				availableHeight = editorHeight + previewWrapHeight,
+				progress = function(animation, progress) {
+					self.editor.height(availableHeight - self.previewWrap.outerHeight());
+				};
+			
 			if (show) {
 				this.wrap.removeClass(name + 'previewinvisible').addClass(name + 'previewvisible');
 				this.update();
-				this.previewWrap.stop().slideDown(duration);
+				// Check that preview is not too big:
+				previewWrapHeight = this.previewWrap.outerHeight() + previewWrapMargin;
+				if(previewWrapHeight > editorHeight - 15) {
+					this.preview.height("-=" + (previewWrapHeight - (editorHeight - 15)));
+				}
+				this.previewWrap.stop().slideDown({
+						duration: duration,
+						progress: progress,
+						complete: function() {
+							self.wrap[0].style.height = originalWrapStyleHeight;
+						}
+					});
 			} else {
 				if (this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
-					this.previewWrap.stop().slideUp(duration);
-				}
-				else {
+					this.previewWrap.stop().slideUp({
+						duration: duration,
+						progress: progress,
+						complete: function() {
+							self.editor.height("+=" + previewWrapMargin);
+							self.wrap[0].style.height = originalWrapStyleHeight;
+						}
+					});
+				} else {
 					this.previewWrap.stop().hide();
+					self.editor.height(availableHeight + previewWrapMargin);
+					self.wrap[0].style.height = originalWrapStyleHeight;
 				}
 				this.wrap.removeClass(name + 'previewvisible').addClass(name + 'previewinvisible');
 			}
@@ -477,22 +586,55 @@
 			return this.wrap.hasClass('fullscreen');
 		},
 		toggleFullscreen: function(full) {
-			var isFullscreen = this.isFullscreen();
-			if (full === isFullscreen) {
+			full = checkToggleState(full, this.isFullscreen());
+			if (full === undefined) {
 				return this;
 			}
-			if (full === undefined) {
-				full = !isFullscreen;
-			}
 			
+			var data = this.fullscreenData;
 			if (full) {
+				// Keep height in case it is "auto" or "" or whatever:
+				data.originalWrapHeight = this.wrap.height();
+				data.originalWrapStyleHeight = this.wrap[0].style.height;
+				
 				this.wrap.addClass('fullscreen');
 			} else {
 				this.wrap.removeClass('fullscreen');
+				
+				// Insure that height is correctly reset:
+				this.adjustHeights(data.originalWrapHeight);
+				this.lastWrapHeight = data.originalWrapHeight;
+				this.wrap[0].style.height = data.originalWrapStyleHeight;
 			}
+			
+			return this;
+		},
+		// When the wrap height changes, this will resize the editor and the preview,
+		// keeping the height ratio between them.
+		adjustHeights: function(wrapHeight) {
+			var isPreviewVisible = this.isPreviewVisible(),
+				editorHeight = this.editor.height(),
+				previewHeight = isPreviewVisible ? this.preview.height() : 0,
+				availableHeight = editorHeight + previewHeight + (wrapHeight - this.lastWrapHeight),
+				newEditorHeight = Math.round(this.lastEditorPercentHeight * availableHeight),
+				newPreviewHeight = availableHeight - newEditorHeight;
+			if(newEditorHeight < 15) {
+				newPreviewHeight -= 15 - newEditorHeight;
+				newEditorHeight = 15;
+			} else if(newPreviewHeight < 15) {
+				newEditorHeight -= 15 - newPreviewHeight;
+				newPreviewHeight = 15;
+			}
+			if (!isPreviewVisible) {
+				// Keep the newPreviewHeight for when the preview will slide down again.
+				// But allow newEditorHeight to take the whole available height:
+				newEditorHeight = editorHeight + (wrapHeight - this.lastWrapHeight);
+			}
+			this.editor.height(newEditorHeight);
+			this.preview.height(newPreviewHeight);
 			
 			return this;
 		}
 	});
-
-}(jQuery, window));
+	
+}(jQuery, window, document));
