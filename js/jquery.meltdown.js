@@ -423,7 +423,8 @@
 		examples: getExamples(),
 		autoOpenPreview: true,
 		previewHeight: "editorHeight", // A CSS height or "editorHeight". "" mean that the height adjusts to the content.
-		previewTimeout: 400
+		previewTimeout: 400,
+		parser: Markdown
 	};
 	
 	// The Meltdown base class:
@@ -516,7 +517,7 @@
 		update: function(force) {
 			var src = this.editor.val();
 			if (force === true || (this.isPreviewVisible() && src !== this.lastSrc)) {
-				this.preview.html(Markdown(src));
+				this.preview.html(this.options.parser(src));
 				this.lastSrc = src;
 			}
 			return this;	// Chaining
