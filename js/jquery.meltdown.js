@@ -437,7 +437,7 @@
 	$.fn.meltdown.methods = $.extend(Meltdown.prototype, {
 		init: function(userOptions) {
 			var self = this,
-				options = this.options = $.extend(true, {}, $.fn.meltdown.defaults, userOptions);
+				_options = this._options = $.extend(true, {}, $.fn.meltdown.defaults, userOptions);
 			
 			this.editorPreInitWidth = this.element.outerWidth();
 			
@@ -455,7 +455,7 @@
 			this.bottommargin = $('<div class="' + name + '_bottommargin"/>').appendTo(this.wrap);
 			
 			// Setup meltdown sizes:
-			var previewHeight = options.previewHeight;
+			var previewHeight = _options.previewHeight;
 			if (previewHeight === "editorHeight") {
 				previewHeight = this.editor.outerHeight();
 			}
@@ -463,7 +463,7 @@
 			this.preview.height(previewHeight);
 			
 			// Build toolbar:
-			buildControls(options, this.editor, this.controls);
+			buildControls(_options, this.editor, this.controls);
 			this.controls.append(getPreviewControl(this));
 			addToolTip(this.wrap);
 			
@@ -481,7 +481,7 @@
 			this.editor.on('keyup', $.proxy(this.debouncedUpdate, this));
 			
 			// Setup initial state:
-			if (options.autoOpenPreview) {
+			if (_options.autoOpenPreview) {
 				this.update(true);
 			} else {
 				this.previewWrap.hide();
@@ -514,10 +514,18 @@
 			
 			return this;	// Chaining
 		},
+		options: function(name, value) {
+			if (arguments.length === 1) {
+				return this._options[name];
+			} else if (arguments.length > 1) {
+				this._options[name] = value;
+				return this;
+			}
+		},
 		update: function(force) {
 			var src = this.editor.val();
 			if (force === true || (this.isPreviewVisible() && src !== this.lastSrc)) {
-				this.preview.html(this.options.parser(src));
+				this.preview.html(this._options.parser(src));
 				this.lastSrc = src;
 			}
 			return this;	// Chaining
@@ -531,7 +539,7 @@
 				return this;
 			}
 			if (duration === undefined) {
-				duration = this.options.previewTimeout;
+				duration = this._options.previewTimeout;
 			}
 			
 			// Set height to prevent changes during animation:
