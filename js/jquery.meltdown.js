@@ -58,13 +58,13 @@
 			]),
 			
 			// Should the preview be visible by default ?
-			autoOpenPreview: true,
+			openPreview: true,
 			
 			// A CSS height or "editorHeight" or "auto" (to let the height adjust to the content).
 			previewHeight: "editorHeight",
 			
 			// Duration of the preview toggle animation:
-			previewTimeout: 400,
+			previewDuration: 400,
 			
 			// If true, meltdown manages the editor and the preview heights to prevent them from resizing the wrap.
 			heightsManaged: false,
@@ -515,7 +515,7 @@
 			// Insert meltdown in the document:
 			this.editor.after(this.wrap).appendTo(this.editorDeco);
 			
-			// Setup options.autoOpenPreview and options.heightsManaged:
+			// Setup options.openPreview and options.heightsManaged:
 			this.togglePreview(true, 0, true);
 			if (_options.heightsManaged && _options.previewHeight === "auto") {
 				this.preview.height("+=0");	// If heightsManaged, we cannot have a dynamic height.
@@ -546,7 +546,7 @@
 			});
 			
 			// Now that all measures where made, we can close the preview if needed:
-			if (!_options.autoOpenPreview) {
+			if (!_options.openPreview) {
 				this.togglePreview(false, 0);
 			}
 			
@@ -577,7 +577,7 @@
 				return this;
 			}
 			if (duration === undefined) {
-				duration = this._options.previewTimeout;
+				duration = this._options.previewDuration;
 			}
 			
 			// Function to resize the editor when the preview is resized:
