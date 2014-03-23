@@ -324,59 +324,21 @@
 		return controlList;
 	}
 	
-	function addToolTip(wrap) {
-		var tip, controlPreview;
-
-		if ($.qtip) {
-			controlPreview = wrap.find('.meltdown_control-preview');
-			// Disable the preview
-			controlPreview.addClass('disabled');
-			tip = controlPreview.qtip({
-				content: "Warning this feature is a tech preview feature.<br/>"
-						 + "There is a <a target=\"_blank\" href=\"https://github.com/iphands/Meltdown/issues/1\">known issue</a> with one of the libraries used to generate the live preview.<br/><br/>"
-						 + "Live previews <b>can</b> cause the browser tab to stop responding.<br/><br/>"
-						 + "This warning will be removed when <a href=\"#\" target=\"_blank\" href=\"https://github.com/iphands/Meltdown/issues/1\">the issue</a> is resolved.<br/></br>"
-						 + "<input type=\"button\" class=\"meltdown_control-preview-enabler\" value=\"Click here\"> to remove this warning and enable live previews",
-				show: {
-					delay: 0,
-					when: {
-						event: 'mouseover'
-					}
-				},
-				hide: {
-					delay: 5000,
-					when: {
-						event: 'mouseout'
-					}
-				},
-				position: {
-					corner: {
-						target: 'leftMiddle',
-						tooltip: 'rightMiddle'
-					}
-				},
-				api: {
-					onRender: function () {
-						$('.meltdown_control-preview-enabler').click(function () {
-							tip.qtip('destroy');
-							controlPreview.removeClass('disabled');
-							controlPreview.click();
-						});
-					}
-				},
-				style: {
-					classes: 'meltdown_techpreview-qtip',
-					name: 'dark',
-					lineHeight: '1.3em',
-					padding: '12px',
-					width: {
-						max: 300,
-						min: 0
-					},
-					tip: true
+	function addWarning(meltdown, element) {
+		element.click(function(e) {
+			var warning = $('<div class"' + plgName + '_warning"/>').html('<center><b>The preview area is a tech preview feature</b></center><br/>'
+				 + 'Live previews <b>can</b> cause the browser tab to stop responding.<br/><br/>'
+				 + 'There is a <a target="_blank" href="https://github.com/iphands/Meltdown/issues/1">known issue</a> with <a target="_blank" href="https://github.com/tanakahisateru/js-markdown-extra#notice">one of the libraries</a> used to generate the live preview.<br/><br/>'
+				 + 'This warning will be removed when the issue is resolved.<br/><br/>'
+				 + '<center><i>Click to continue.</i></center>').css({background: "#fdd", cursor: "pointer"});
+			warning.on("click", function(e) {
+				if (!$(e.target).is("a, a *")) {	// Ignore clicks on links
+					meltdown.update(true);
 				}
 			});
-		}
+			meltdown.preview.empty().append(warning);
+			e.preventDefault();
+		});
 	}
 	
 	// Setup event handlers for the resize handle:
@@ -494,7 +456,7 @@
 			
 			// Build toolbar:
 			buildControls(this, this._options.controls).appendTo(this.bar);
-			addToolTip(this.wrap);
+			addWarning(this, this.previewHeader.find(".meltdown_techpreview"));
 			
 			// editorDeco's CSS need a bit of help:
 			this.editor.focus(function() {
@@ -516,7 +478,7 @@
 			this.editor.after(this.wrap).appendTo(this.editorDeco);
 			
 			// Setup options.openPreview and options.heightsManaged:
-			this.togglePreview(true, 0, true);
+			this.togglePreview(true, 0, true, !_options.openPreview);
 			if (_options.heightsManaged && _options.previewHeight === "auto") {
 				this.preview.height("+=0");	// If heightsManaged, we cannot have a dynamic height.
 			}
@@ -571,7 +533,7 @@
 		isPreviewVisible: function() {
 			return this.wrap.hasClass(plgName + 'previewvisible');
 		},
-		togglePreview: function(show, duration, force) {
+		togglePreview: function(show, duration, force, noUpdate) {
 			show = checkToggleState(show, this.isPreviewVisible(), force);
 			if (show === undefined) {
 				return this;
@@ -592,7 +554,9 @@
 			
 			if (show) {
 				this.wrap.removeClass(plgName + 'previewinvisible').addClass(plgName + 'previewvisible');
-				this.update();
+				if (!noUpdate) {
+					this.update();
+				}
 				var previewWrapHeightUsed = this.previewWrap.outerHeight() + previewWrapMargin;
 				// Check that preview is not too big:
 				if (this._heightsManaged && previewWrapHeightUsed > editorHeight - 15) {
