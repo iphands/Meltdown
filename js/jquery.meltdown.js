@@ -663,6 +663,9 @@
 			
 			return this;
 		},
+		isHeightsManaged: function() {
+			return this._heightsManaged;
+		},
 		toggleHeightsManaged: function(managed, force) {
 			managed = checkToggleState(managed, this._heightsManaged, force);
 			if (managed === undefined) {
