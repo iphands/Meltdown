@@ -9,20 +9,203 @@
 (function ($, window, document, undefined) {
 	'use strict';
 
-	var ver, name, dbg;
-	ver = '0.1';
-	name = 'meltdown';
-	dbg = true;
-	
-	var body = $("body"),
+	var ver = '0.1',
+		plgName = 'meltdown',
+		dbg = true,
+		body = $("body"),
 		doc = $(document);
-
+	
 	function debug(msg) {
 		if (window.console && dbg) {
 			console.log(msg);
 		}
 	}
-
+	
+	// Helper for users that want to change the controls (For usage, see: $.meltdown.defaults.controls below)
+	var controlsGroup = function(name, label, controls) {
+		controls.name = name;
+		controls.label = label;
+		return controls;
+	};
+	
+	$.meltdown = {
+		// Expose publicly:
+		controlsGroup: controlsGroup,
+		
+		// Default meltdown options:
+		defaults: {
+			// Use $.meltdown.controlsGroup() to make groups and subgroups of controls.
+			// The available control names come from the keys of $.meltdown.controlDefs (see below)
+			controls: controlsGroup("", "", [
+				"bold",
+				"italics",
+				"ul",
+				"ol",
+				"table",
+				controlsGroup("h", "Headers", ["h1", "h2", "h3", "h4", "h5", "h6"]),
+				controlsGroup("kitchenSink", "Kitchen Sink", [
+					"link",
+					"img",
+					"blockquote",
+					"codeblock",
+					"code",
+					"footnote",
+					"hr"
+				]),
+				"hidepreview",
+				"showpreview"
+			]),
+		
+			// Should the preview be visible by default ?
+			autoOpenPreview: true,
+		
+			// A CSS height or "editorHeight". "" mean that the height adjusts to the content.
+			previewHeight: "editorHeight",
+		
+			// Duration of the preview toggle animation:
+			previewTimeout: 400,
+		
+			// The parser. The function takes a string and returns an html formatted string.
+			parser: Markdown
+		},
+		
+		// Definitions for the toolbar controls:
+		controlDefs: {
+			bold: {
+				label: "B",
+				altText: "Bold",
+				before: "**",
+				after: "**"
+			},
+			italics: {
+				label: "I",
+				altText: "Italics",
+				before: "*",
+				after: "*"
+			},
+			ul: {
+				label: "UL",
+				altText: "Unordered List",
+				preselectLine: true,
+				before: "* ",
+				placeholder: "Item\n* Item",
+				isBlock: true
+			},
+			ol: {
+				label: "OL",
+				altText: "Ordered List",
+				preselectLine: true,
+				before: "1. ",
+				placeholder: "Item 1\n2. Item 2\n3. Item 3",
+				isBlock: true
+			},
+			table: {
+				label: "Table",
+				altText: "Table",
+				before: "First Header  | Second Header\n------------- | -------------\nContent Cell  | Content Cell\nContent Cell  | Content Cell\n",
+				isBlock: true
+			},
+			link: {
+				label: "Link",
+				group: "kitchenSink",
+				groupLabel: "Kitchen Sink",
+				altText: "Link",
+				before: "[",
+				placeholder: "Example link",
+				after: "](http:// \"Link title\")"
+			},
+			img: {
+				label: "Image",
+				group: "kitchenSink",
+				groupLabel: "Kitchen Sink",
+				altText: "Image",
+				before: "![Alt text](",
+				placeholder: "http://",
+				after: ")"
+			},
+			blockquote: {
+				label: "Blockquote",
+				group: "kitchenSink",
+				groupLabel: "Kitchen Sink",
+				altText: "Blockquote",
+				preselectLine: true,
+				before: "> ",
+				placeholder: "Quoted text",
+				isBlock: true
+			},
+			codeblock: {
+				label: "Code Block",
+				group: "kitchenSink",
+				groupLabel: "Kitchen Sink",
+				altText: "Code Block",
+				preselectLine: true,
+				before: "~~~\n",
+				placeholder: "Code",
+				after: "\n~~~",
+				isBlock: true
+			},
+			code: {
+				label: "Code",
+				group: "kitchenSink",
+				groupLabel: "Kitchen Sink",
+				altText: "Inline Code",
+				before: "`",
+				placeholder: "code",
+				after: "`"
+			},
+			footnote: {
+				label: "Footnote",
+				group: "kitchenSink",
+				groupLabel: "Kitchen Sink",
+				altText: "Footnote",
+				before: "[^1]\n\n[^1]:",
+				placeholder: "Example footnote",
+				isBlock: true
+			},
+			hr: {
+				label: "HR",
+				group: "kitchenSink",
+				groupLabel: "Kitchen Sink",
+				altText: "Horizontal Rule",
+				before: "----------",
+				placeholder: "",
+				isBlock: true
+			},
+			hidepreview: {
+				label: "Hide",
+				altText: "Hide preview",
+				click: function(meltdown, def, control) {
+					if (!control.hasClass('disabled')) {
+						meltdown.togglePreview(false);
+					}
+				}
+			},
+			showpreview: {
+				label: "Show",
+				altText: "Show preview",
+				click: function(meltdown, def, control) {
+					if (!control.hasClass('disabled')) {
+						meltdown.togglePreview(true);
+					}
+				}
+			}
+		}
+	};
+	
+	// Add h1...h6 control definitions to $.meltdown.controlDefs:
+	(function(controlDefs) {
+		for (var pounds = "", i = 1; i <= 6; i++) {
+			pounds += "#";
+			controlDefs['h' + i] = {
+				label: "H" + i,
+				altText: "Header " + i,
+				preselectLine: true,
+				before: pounds + " "
+			};
+		}
+	})($.meltdown.controlDefs);
+	
+	
 	function addControlEventHandler(meltdown, def, control) {
 		var editor = meltdown.editor,
 			handler = function () {
@@ -90,8 +273,8 @@
 	
 	function addGroupClickHandler(control) {
 		control.on('click', function () {
-			control.siblings('li').removeClass(name + '_controlgroup-open').children('ul').hide();
-			control.toggleClass(name + '_controlgroup-open').children('ul').toggle();
+			control.siblings('li').removeClass(plgName + '_controlgroup-open').children('ul').hide();
+			control.toggleClass(plgName + '_controlgroup-open').children('ul').toggle();
 		});
 	}
 	
@@ -99,7 +282,7 @@
 		var controlList = $('<ul />');
 		if (subGroup) {
 			controlList.css("display", "none");
-			controlList.addClass(name + '_controlgroup-dropdown ' + name + "_controlgroup-" + controlsGroup.name);
+			controlList.addClass(plgName + '_controlgroup-dropdown ' + plgName + "_controlgroup-" + controlsGroup.plgName);
 		} else {
 			controlList.addClass("meltdown_controls");
 		}
@@ -114,12 +297,12 @@
 					debug("Control not found: " + controlName);
 					continue;
 				}
-				control.addClass(name + '_control ' + name + "_control-" + controlName + ' ' + (def.styleClass || ""));
+				control.addClass(plgName + '_control ' + plgName + "_control-" + controlName + ' ' + (def.styleClass || ""));
 				span.text(def.label).attr("title", def.altText);
 				addControlEventHandler(meltdown, def, control);
 				
 			} else if ($.isArray(controlName)) {
-				control.addClass(name + '_controlgroup ' + name + "_controlgroup-" + controlName.name);
+				control.addClass(plgName + '_controlgroup ' + plgName + "_controlgroup-" + controlName.name);
 				span.text(controlName.label).append('<i class="meltdown-icon-caret-down" />');
 				addGroupClickHandler(control);
 				control.append(buildControls(meltdown, controlName, true));
@@ -129,143 +312,7 @@
 		
 		return controlList;
 	}
-
-	$.meltdown = {};
 	
-	$.meltdown.controlDefs = {
-		bold: {
-			label: "B",
-			altText: "Bold",
-			before: "**",
-			after: "**"
-		},
-		italics: {
-			label: "I",
-			altText: "Italics",
-			before: "*",
-			after: "*"
-		},
-		ul: {
-			label: "UL",
-			altText: "Unordered List",
-			preselectLine: true,
-			before: "* ",
-			placeholder: "Item\n* Item",
-			isBlock: true
-		},
-		ol: {
-			label: "OL",
-			altText: "Ordered List",
-			preselectLine: true,
-			before: "1. ",
-			placeholder: "Item 1\n2. Item 2\n3. Item 3",
-			isBlock: true
-		},
-		table: {
-			label: "Table",
-			altText: "Table",
-			before: "First Header  | Second Header\n------------- | -------------\nContent Cell  | Content Cell\nContent Cell  | Content Cell\n",
-			isBlock: true
-		},
-		link: {
-			label: "Link",
-			group: "kitchenSink",
-			groupLabel: "Kitchen Sink",
-			altText: "Link",
-			before: "[",
-			placeholder: "Example link",
-			after: "](http:// \"Link title\")"
-		},
-		img: {
-			label: "Image",
-			group: "kitchenSink",
-			groupLabel: "Kitchen Sink",
-			altText: "Image",
-			before: "![Alt text](",
-			placeholder: "http://",
-			after: ")"
-		},
-		blockquote: {
-			label: "Blockquote",
-			group: "kitchenSink",
-			groupLabel: "Kitchen Sink",
-			altText: "Blockquote",
-			preselectLine: true,
-			before: "> ",
-			placeholder: "Quoted text",
-			isBlock: true
-		},
-		codeblock: {
-			label: "Code Block",
-			group: "kitchenSink",
-			groupLabel: "Kitchen Sink",
-			altText: "Code Block",
-			preselectLine: true,
-			before: "~~~\n",
-			placeholder: "Code",
-			after: "\n~~~",
-			isBlock: true
-		},
-		code: {
-			label: "Code",
-			group: "kitchenSink",
-			groupLabel: "Kitchen Sink",
-			altText: "Inline Code",
-			before: "`",
-			placeholder: "code",
-			after: "`"
-		},
-		footnote: {
-			label: "Footnote",
-			group: "kitchenSink",
-			groupLabel: "Kitchen Sink",
-			altText: "Footnote",
-			before: "[^1]\n\n[^1]:",
-			placeholder: "Example footnote",
-			isBlock: true
-		},
-		hr: {
-			label: "HR",
-			group: "kitchenSink",
-			groupLabel: "Kitchen Sink",
-			altText: "Horizontal Rule",
-			before: "----------",
-			placeholder: "",
-			isBlock: true
-		},
-		hidepreview: {
-			label: "Hide",
-			altText: "Hide preview",
-			click: function(meltdown, def, control) {
-				if (!control.hasClass('disabled')) {
-					meltdown.togglePreview(false);
-				}
-			}
-		},
-		showpreview: {
-			label: "Show",
-			altText: "Show preview",
-			click: function(meltdown, def, control) {
-				if (!control.hasClass('disabled')) {
-					meltdown.togglePreview(true);
-				}
-			}
-		}
-	};
-	
-	// Add h1...h6 controls:
-	(function(controlDefs) {
-		for (var pounds = "", i = 1; i <= 6; i++) {
-			pounds += "#";
-			controlDefs['h' + i] = {
-				label: "H" + i,
-				altText: "Header " + i,
-				preselectLine: true,
-				before: pounds + " "
-			};
-		}
-	})($.meltdown.controlDefs);
-
 	function addToolTip(wrap) {
 		var tip, controlPreview;
 
@@ -386,79 +433,8 @@
 		return newState;
 	}
 	
-	$.fn.meltdown = function (arg) {
-		// Get method name and method arguments:
-		var methodName = $.type(arg) === "string" ? arg : "init",
-			args = Array.prototype.slice.call(arguments, methodName === "init" ? 0 : 1);
-		
-		// Dispatch method call:
-		for (var elem, meltdown, returnValue,	i = 0; i < this.length; i++) {
-			elem = this[i];
-			// Get the Meltdown object or create it:
-			meltdown = $.data(elem, "Meltdown");
-			if (methodName === "init") {
-				if (meltdown) continue;	// Don't re-init it.
-				meltdown = new Meltdown(elem);
-				$.data(elem, "Meltdown", meltdown);
-			}
-			// Call the method:
-			returnValue = meltdown[methodName].apply(meltdown, args);
-			// If the method is a getter, return the value
-			// (See: http://bililite.com/blog/2009/04/23/improving-jquery-ui-widget-getterssetters/)
-			if (returnValue !== meltdown) {
-				return returnValue;
-			}
-		}
-		
-		return this;	// Chaining
-	};
 	
-	// Helper for users that want to change the controls (For usage, see: $.meltdown.defaults.controls)
-	var controlsGroup = $.meltdown.controlsGroup = function(name, label, controls) {
-		controls.name = name;
-		controls.label = label;
-		return controls;
-	};
-	
-	// Default meltdown initialization options:
-	$.meltdown.defaults = {
-		
-		// Use $.meltdown.controlsGroup() to make groups and subgroups of controls.
-		// The available control names come from the keys of $.meltdown.controlDefs
-		controls: controlsGroup("", "", [
-			"bold",
-			"italics",
-			"ul",
-			"ol",
-			"table",
-			controlsGroup("h", "Headers", ["h1", "h2", "h3", "h4", "h5", "h6"]),
-			controlsGroup("kitchenSink", "Kitchen Sink", [
-				"link",
-				"img",
-				"blockquote",
-				"codeblock",
-				"code",
-				"footnote",
-				"hr"
-			]),
-			"hidepreview",
-			"showpreview"
-		]),
-		
-		// Should the preview be visible by default ?
-		autoOpenPreview: true,
-		
-		// A CSS height or "editorHeight". "" mean that the height adjusts to the content.
-		previewHeight: "editorHeight",
-		
-		// Duration of the preview toggle animation:
-		previewTimeout: 400,
-		
-		// The parser. The function takes a string and returns an html formatted string.
-		parser: Markdown
-	};
-	
-	// The Meltdown base class:
+	// Meltdown base class:
 	var Meltdown = $.meltdown.Meltdown = function(elem) {
 			this.element = $(elem);
 		};
@@ -473,16 +449,16 @@
 			this.editorPreInitWidth = this.element.outerWidth();
 			
 			// Setup everything detached from the document:
-			this.wrap = $('<div class="' + name + '_wrap ' + name + 'previewvisible" />');
-			this.topmargin = $('<div class="' + name + '_topmargin"/>').appendTo(this.wrap);
-			this.editorWrap =  $('<div class="' + name + '_editor-wrap" />').appendTo(this.wrap);
+			this.wrap = $('<div class="' + plgName + '_wrap ' + plgName + 'previewvisible" />');
+			this.topmargin = $('<div class="' + plgName + '_topmargin"/>').appendTo(this.wrap);
+			this.editorWrap =  $('<div class="' + plgName + '_editor-wrap" />').appendTo(this.wrap);
 			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.editorWrap);
-			this.editorDeco =  $('<div class="' + name + '_editor-deco" />').appendTo(this.editorWrap);
+			this.editorDeco =  $('<div class="' + plgName + '_editor-deco" />').appendTo(this.editorWrap);
 			this.editor = this.element.addClass("meltdown_editor");
-			this.previewWrap =  $('<div class="' + name + '_preview-wrap"></div>').appendTo(this.wrap);
-			this.previewHeader =  $('<span class="' + name + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
-			this.preview =  $('<div class="' + name + '_preview"></div>').appendTo(this.previewWrap);
-			this.bottommargin = $('<div class="' + name + '_bottommargin"/>').appendTo(this.wrap);
+			this.previewWrap =  $('<div class="' + plgName + '_preview-wrap"></div>').appendTo(this.wrap);
+			this.previewHeader =  $('<span class="' + plgName + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
+			this.preview =  $('<div class="' + plgName + '_preview"></div>').appendTo(this.previewWrap);
+			this.bottommargin = $('<div class="' + plgName + '_bottommargin"/>').appendTo(this.wrap);
 			
 			// Setup meltdown sizes:
 			var previewHeight = _options.previewHeight;
@@ -514,7 +490,7 @@
 				this.update(true);
 			} else {
 				this.previewWrap.hide();
-				this.wrap.removeClass(name + 'previewvisible').addClass(name + 'previewinvisible');
+				this.wrap.removeClass(plgName + 'previewvisible').addClass(plgName + 'previewinvisible');
 			}
 			
 			// Store datas needed by fullscreen mode:
@@ -560,7 +536,7 @@
 			return this;	// Chaining
 		},
 		isPreviewVisible: function() {
-			return this.wrap.hasClass(name + 'previewvisible');
+			return this.wrap.hasClass(plgName + 'previewvisible');
 		},
 		togglePreview: function(show, duration) {
 			show = checkToggleState(show, this.isPreviewVisible());
@@ -586,7 +562,7 @@
 				};
 			
 			if (show) {
-				this.wrap.removeClass(name + 'previewinvisible').addClass(name + 'previewvisible');
+				this.wrap.removeClass(plgName + 'previewinvisible').addClass(plgName + 'previewvisible');
 				this.update();
 				// Check that preview is not too big:
 				previewWrapHeight = this.previewWrap.outerHeight() + previewWrapMargin;
@@ -615,7 +591,7 @@
 					self.editor.height(availableHeight + previewWrapMargin);
 					self.wrap[0].style.height = originalWrapStyleHeight;
 				}
-				this.wrap.removeClass(name + 'previewvisible').addClass(name + 'previewinvisible');
+				this.wrap.removeClass(plgName + 'previewvisible').addClass(plgName + 'previewinvisible');
 			}
 			
 			return this;
@@ -674,5 +650,33 @@
 			return this;
 		}
 	});
+	
+	// THE $(...).meltdown() function:
+	$.fn.meltdown = function (arg) {
+		// Get method name and method arguments:
+		var methodName = $.type(arg) === "string" ? arg : "init",
+			args = Array.prototype.slice.call(arguments, methodName === "init" ? 0 : 1);
+		
+		// Dispatch method call:
+		for (var elem, meltdown, returnValue,	i = 0; i < this.length; i++) {
+			elem = this[i];
+			// Get the Meltdown object or create it:
+			meltdown = $.data(elem, "Meltdown");
+			if (methodName === "init") {
+				if (meltdown) continue;	// Don't re-init it.
+				meltdown = new Meltdown(elem);
+				$.data(elem, "Meltdown", meltdown);
+			}
+			// Call the method:
+			returnValue = meltdown[methodName].apply(meltdown, args);
+			// If the method is a getter, return the value
+			// (See: http://bililite.com/blog/2009/04/23/improving-jquery-ui-widget-getterssetters/)
+			if (returnValue !== meltdown) {
+				return returnValue;
+			}
+		}
+		
+		return this;	// Chaining
+	};
 	
 }(jQuery, window, document));
