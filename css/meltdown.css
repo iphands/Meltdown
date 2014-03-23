@@ -20,8 +20,11 @@ user-select: none;
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
-	resize: vertical;
 	overflow: hidden;
+}
+
+.meltdown_wrap.heightsManaged {
+	resize: vertical;
 }
 
 /* Allow the margins to collapse with the other childrens of .meltdown_wrap: */
@@ -157,8 +160,12 @@ you can use the generic selector below, but it's slower:
 	margin: 0;
 	border: 0;
 	width: 100%;
-	resize: none;
+	resize: vertical;
 	min-height: 15px;
+}
+
+.meltdown_wrap.heightsManaged .meltdown_editor {
+	resize: none;
 }
 
 
@@ -410,7 +417,12 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	-moz-border-radius-bottomleft: 3px;
 	border-bottom-right-radius: 3px;
 	border-bottom-left-radius: 3px;
+	resize: vertical;
 	min-height: 15px;
+}
+
+.meltdown_wrap.heightsManaged .meltdown_preview {
+	resize: none;
 }
 
 
@@ -430,7 +442,6 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	-webkit-border-radius: 0;
 	border-radius: 0;
 	z-index: 1000;
-	resize: none;
 }
 
 
