@@ -53,7 +53,8 @@
 					"hr"
 				]),
 				"hidepreview",
-				"showpreview"
+				"showpreview",
+				"fullscreen"
 			]),
 		
 			// Should the preview be visible by default ?
@@ -187,6 +188,13 @@
 					if (!control.hasClass('disabled')) {
 						meltdown.togglePreview(true);
 					}
+				}
+			},
+			fullscreen: {
+				label: "Fullscreen",
+				altText: "Fullscreen",
+				click: function(meltdown, def, control) {
+					meltdown.toggleFullscreen();
 				}
 			}
 		}
