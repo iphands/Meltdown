@@ -68,6 +68,10 @@
 			// For example, this is used internally for fullscreen.
 			heightsManaged: false,
 			
+			// If true, when the preview is fully scrolled it will stay scrolled while typing.
+			// Very convenient when typing/adding text at the end of the editor.
+			autoScrollPreview: true,
+			
 			// Duration of the preview toggle animation:
 			previewDuration: 400,
 			
@@ -521,13 +525,19 @@
 				return this._options[name];
 			} else if (arguments.length > 1) {
 				this._options[name] = value;
-				return this;
+				return this;	// Chaining
 			}
 		},
 		update: function(force) {
 			var text = this.editor.val();
 			if (force === true || (this.isPreviewVisible() && text !== this.lastText)) {
+				// If the preview is scrolled to the bottom, keept it scrolled after update:
+				var previewNode = this.preview[0],
+					scrolledToBottom = previewNode.scrollHeight - previewNode.scrollTop === previewNode.clientHeight;
 				this.preview.html(this._options.parser(text));
+				if (scrolledToBottom) {
+					previewNode.scrollTop = previewNode.scrollHeight;
+				}
 				this.lastText = text;
 			}
 			return this;	// Chaining
@@ -538,7 +548,7 @@
 		togglePreview: function(show, duration, force, noUpdate) {
 			show = checkToggleState(show, this.isPreviewVisible(), force);
 			if (show === undefined) {
-				return this;
+				return this;	// Chaining
 			}
 			if (duration === undefined) {
 				duration = this._options.previewDuration;
@@ -588,7 +598,7 @@
 				this.wrap.removeClass(plgName + 'previewvisible').addClass(plgName + 'previewinvisible');
 			}
 			
-			return this;
+			return this;	// Chaining
 		},
 		isFullscreen: function() {
 			return this.wrap.hasClass('fullscreen');
@@ -596,7 +606,7 @@
 		toggleFullscreen: function(full) {
 			full = checkToggleState(full, this.isFullscreen());
 			if (full === undefined) {
-				return this;
+				return this;	// Chaining
 			}
 			
 			var data = this.fullscreenData;
@@ -627,7 +637,7 @@
 				this.wrap[0].style.height = data.originalWrapStyleHeight;
 			}
 			
-			return this;
+			return this;	// Chaining
 		},
 		isHeightsManaged: function() {
 			return this._heightsManaged;
@@ -635,7 +645,7 @@
 		toggleHeightsManaged: function(managed, force) {
 			managed = checkToggleState(managed, this._heightsManaged, force);
 			if (managed === undefined) {
-				return this;
+				return this;	// Chaining
 			}
 			
 			if (managed) {
@@ -645,7 +655,7 @@
 			}
 			this._heightsManaged = managed;
 			
-			return this;
+			return this;	// Chaining
 		},
 		// When the wrap height changes, this will resize the editor and the preview,
 		// keeping the height ratio between them.
@@ -663,7 +673,7 @@
 			this.editor.height(heights.editorHeight);
 			this.preview.height(heights.previewHeight);
 			
-			return this;
+			return this;	// Chaining
 		}
 	});
 	
@@ -674,7 +684,7 @@
 			args = Array.prototype.slice.call(arguments, methodName === "init" ? 0 : 1);
 		
 		// Dispatch method call:
-		for (var elem, meltdown, returnValue,	i = 0; i < this.length; i++) {
+		for (var elem, meltdown, returnValue, i = 0; i < this.length; i++) {
 			elem = this[i];
 			// Get the Meltdown object or create it:
 			meltdown = $.data(elem, "Meltdown");
