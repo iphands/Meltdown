@@ -63,11 +63,13 @@
 			// A CSS height or "editorHeight" or "auto" (to let the height adjust to the content).
 			previewHeight: "editorHeight",
 			
+			// If true, meltdown manages the editor and the preview heights to prevent them from resizing the wrap.
+			// This is mostly useful for when meltdown must be fitted in a restricted container.
+			// For example, this is used internally for fullscreen.
+			heightsManaged: false,
+			
 			// Duration of the preview toggle animation:
 			previewDuration: 400,
-			
-			// If true, meltdown manages the editor and the preview heights to prevent them from resizing the wrap.
-			heightsManaged: false,
 			
 			// The parser. The function takes a string and returns an html formatted string.
 			parser: Markdown
