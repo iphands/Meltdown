@@ -622,7 +622,14 @@
 				this.toggleHeightsManaged(true);
 				
 				this.wrap.addClass('fullscreen');
+				var self = this;
+				doc.on("keypress." + plgName + ".fullscreenEscKey", function(e) {
+					if(e.keyCode === 27) {	// Esc key
+						self.toggleFullscreen(false);
+					}
+				});
 			} else {
+				doc.off("keypress." + plgName + ".fullscreenEscKey");
 				this.wrap.removeClass('fullscreen');
 				
 				if (data._heightsManaged) {
