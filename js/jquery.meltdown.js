@@ -21,6 +21,9 @@
 		}
 	}
 	
+	// Used to test the bottom offset of elements:
+	var bottomPositionTest = $('<div style="bottom: 0;" />');
+	
 	// Helper for users that want to change the controls (For usage, see: $.meltdown.defaults.controls below)
 	var controlsGroup = function(name, label, controls) {
 		controls.name = name;
@@ -52,10 +55,14 @@
 					"footnote",
 					"hr"
 				]),
+				"fullscreen",
+				"sidebyside",
 				"hidepreview",
-				"showpreview",
-				"fullscreen"
+				"showpreview"
 			]),
+			
+			// If true, editor and preview will be displayed side by side instead of one on the other.
+			sidebyside: false,
 			
 			// Should the preview be visible by default ?
 			openPreview: true,
@@ -63,10 +70,10 @@
 			// A CSS height or "editorHeight" or "auto" (to let the height adjust to the content).
 			previewHeight: "editorHeight",
 			
-			// If true, meltdown manages the editor and the preview heights to prevent them from resizing the wrap.
-			// This is mostly useful for when meltdown must be fitted in a restricted container.
-			// For example, this is used internally for fullscreen.
-			heightsManaged: false,
+			// If true, when the preview is toggled it will (un)collapse resulting in the total height of the wrap to change.
+			// Set this to false if you want the editor to expand/shrinkin the opposite way of the preview.
+			// Setting this to false can be useful if you want to restrict or lock the total height.
+			previewCollapses: true,
 			
 			// If true, when the preview is fully scrolled it will stay scrolled while typing.
 			// Very convenient when typing/adding text at the end of the editor.
@@ -204,6 +211,13 @@
 				altText: "Fullscreen",
 				click: function(meltdown, def, control) {
 					meltdown.toggleFullscreen();
+				}
+			},
+			sidebyside: {
+				label: "Sidebyside",
+				altText: "Sidebyside",
+				click: function(meltdown, def, control) {
+					meltdown.toggleSidebyside();
 				}
 			}
 		}
@@ -443,8 +457,8 @@
 			// Setup everything detached from the document:
 			this.wrap = $('<div class="' + plgName + '_wrap ' + plgName + 'previewvisible" />');
 			this.topmargin = $('<div class="' + plgName + '_topmargin"/>').appendTo(this.wrap);
+			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.wrap);
 			this.editorWrap =  $('<div class="' + plgName + '_editor-wrap" />').appendTo(this.wrap);
-			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.editorWrap);
 			this.editorDeco =  $('<div class="' + plgName + '_editor-deco" />').appendTo(this.editorWrap);
 			this.editor = this.element.addClass("meltdown_editor");
 			this.previewWrap =  $('<div class="' + plgName + '_preview-wrap"></div>').appendTo(this.wrap);
@@ -483,12 +497,13 @@
 			// Insert meltdown in the document:
 			this.editor.after(this.wrap).appendTo(this.editorDeco);
 			
-			// Setup options.openPreview and options.heightsManaged:
-			this.togglePreview(true, 0, true, !_options.openPreview);
-			if (_options.heightsManaged && _options.previewHeight === "auto") {
-				this.preview.height("+=0");	// If heightsManaged, we cannot have a dynamic height.
+			// Setup display state (preview open and _heightsManaged):
+			this._previewCollapses = _options._previewCollapses;
+			this.togglePreview(true, 0, true, !_options.openPreview);	// Do not update the preview if !_options.openPreview
+			if (!this.isPreviewCollapses() && _options.previewHeight === "auto") {
+				this.preview.height("+=0");	// If !_previewCollapses, we cannot have a dynamic height.
 			}
-			this.toggleHeightsManaged(_options.heightsManaged, true);
+			this._checkHeightsManaged("", undefined, true);	// Set CSS height of wrap.
 			
 			// Define the wrap min height from the editor and the preview min heights:
 			var wrapHeight = this.wrap.height(),
@@ -500,7 +515,7 @@
 			// Setup editor and preview resizing when wrap is resized:
 			this.lastEditorPercentHeight = editorHeight / (editorHeight + previewHeight);
 			this.lastWrapHeight = wrapHeight;
-			addResizeListener(this.wrap[0], function() {
+			this._wrapResizeListener = function() {
 				var newHeight = self.wrap.height();
 				if (newHeight !== self.lastWrapHeight) {
 					if (self._heightsManaged) {
@@ -511,12 +526,15 @@
 					}
 					self.lastWrapHeight = newHeight;
 				}
-			});
+			};
+			addResizeListener(this.wrap[0], this._wrapResizeListener);
 			
-			// Now that all measures where made, we can close the preview if needed:
+			// Now that all measures were made, we can close the preview if needed:
 			if (!_options.openPreview) {
 				this.togglePreview(false, 0);
 			}
+			// And set the sidebyside:
+			this.toggleSidebyside(_options.sidebyside, true);
 			
 			return this;	// Chaining
 		},
@@ -557,42 +575,82 @@
 			// Function to resize the editor when the preview is resized:
 			var self = this,
 				editorHeight = this.editor.height(),
-				previewWrapMargin = parseFloat(this.previewWrap.css("marginTop")),
+				previewWrapMargin = parseFloat(this.previewWrap.css("marginBottom")),
 				previewWrapHeightStart = show ? -previewWrapMargin : this.previewWrap.outerHeight(),
 				availableHeight = editorHeight + previewWrapHeightStart,
-				progress = this._heightsManaged ? function(animation, progress) {
+				progress = this._isHeightsManaged() ? function(animation, progress) {
 					self.editor.height(availableHeight - self.previewWrap.outerHeight());
-				} : $.noop;
+				} : $.noop,
+				editorWrapWidth = this.editorWrap.width(),
+				previewWrapWidth = show ? 0 : this.previewWrap.width(),
+				sidebysideStep = function (now) {
+					self.previewWrap[0].style.maxWidth = now + "px";
+					self.editorWrap.width(editorWrapWidth + (previewWrapWidth - now));
+				};
 			
 			if (show) {
 				this.wrap.removeClass(plgName + 'previewinvisible').addClass(plgName + 'previewvisible');
 				if (!noUpdate) {
 					this.update();
 				}
-				var previewWrapHeightUsed = this.previewWrap.outerHeight() + previewWrapMargin;
-				// Check that preview is not too big:
-				if (this._heightsManaged && previewWrapHeightUsed > editorHeight - 15) {
-					this.preview.height("-=" + (previewWrapHeightUsed - (editorHeight - 15)));
-				}
-				this.previewWrap.stop().slideDown({
+				if (this.isSidebyside()) {
+					this.previewWrap.stop().animate({
+						width: "show"
+					}, {
 						duration: duration,
-						progress: progress
-					});
-			} else {
-				if (this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
-					this.previewWrap.stop().slideUp({
-						duration: duration,
-						progress: progress,
+						step: sidebysideStep,
+						start: function() {
+							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
+						},
 						complete: function() {
-							if (self._heightsManaged) {
-								self.editor.height("+=" + previewWrapMargin);
-							}
+							self.previewWrap.css("max-width", "");
+							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
 						}
 					});
 				} else {
-					this.previewWrap.stop().hide();
-					if (this._heightsManaged) {
-						this.editor.height(availableHeight + previewWrapMargin);
+					var previewWrapHeightUsed = this.previewWrap.outerHeight() + previewWrapMargin;
+					// Check that preview is not too big:
+					if (this._heightsManaged && previewWrapHeightUsed > editorHeight - 15) {
+						this.preview.height("-=" + (previewWrapHeightUsed - (editorHeight - 15)));
+					}
+					this.previewWrap.stop().slideDown({
+						duration: duration,
+						progress: progress,
+						start: function() {
+							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
+						},
+						complete: function() {
+							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
+						}
+					});
+				}
+			} else {
+				if (this.isSidebyside()) {
+					this.previewWrap.stop().animate({
+						width: "hide"
+					}, {
+						duration: duration,
+						step: sidebysideStep,
+						complete: function() {
+							self.previewWrap.css("max-width", "");
+						}
+					});
+				} else {
+					if (this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
+						this.previewWrap.stop().slideUp({
+							duration: duration,
+							progress: progress,
+							complete: function() {
+								if (self._heightsManaged) {
+									self.editor.height("+=" + previewWrapMargin);
+								}
+							}
+						});
+					} else {
+						this.previewWrap.stop().hide();
+						if (this._heightsManaged) {
+							this.editor.height(availableHeight + previewWrapMargin);
+						}
 					}
 				}
 				this.wrap.removeClass(plgName + 'previewvisible').addClass(plgName + 'previewinvisible');
@@ -611,15 +669,11 @@
 			
 			var data = this.fullscreenData;
 			if (full) {
-				data._heightsManaged = this._heightsManaged;
-				if (data._heightsManaged) {
-					data.originalWrapHeight = this.wrap.height();
-				} else {
-					data.availableHeight = this.editor.height() + this.preview.height();
-				}
+				data.originalWrapHeight = this.wrap.height();
+				data.availableHeight = this.editor.height() + this.preview.height();
 				// Keep height in case it is "auto" or "" or whatever:
 				data.originalWrapStyleHeight = this.wrap[0].style.height;
-				this.toggleHeightsManaged(true);
+				this._checkHeightsManaged("fullscreen", true);
 				
 				this.wrap.addClass('fullscreen');
 				var self = this;
@@ -632,7 +686,7 @@
 				doc.off("keypress." + plgName + ".fullscreenEscKey");
 				this.wrap.removeClass('fullscreen');
 				
-				if (data._heightsManaged) {
+				if (this._isHeightsManaged()) {
 					this.adjustHeights(data.originalWrapHeight);
 					this.lastWrapHeight = data.originalWrapHeight;
 				} else {
@@ -640,16 +694,79 @@
 					this.editor.height(heights.editorHeight);
 					this.preview.height(heights.previewHeight);
 				}
-				this.toggleHeightsManaged(data._heightsManaged);
+				this._checkHeightsManaged("fullscreen", false);
 				this.wrap[0].style.height = data.originalWrapStyleHeight;
 			}
 			
 			return this;	// Chaining
 		},
-		isHeightsManaged: function() {
+		isSidebyside: function() {
+			return this.wrap.hasClass('sidebyside');
+		},
+		toggleSidebyside: function(sidebyside, force) {
+			sidebyside = checkToggleState(sidebyside, this.isSidebyside(), force);
+			if (sidebyside === undefined) {
+				return this;	// Chaining
+			}
+			
+			var isPreviewVisible = this.isPreviewVisible(),
+				originalBottommarginTop = this.bottommargin.offset().top;
+			if (sidebyside) {
+				this.wrap.addClass("sidebyside");
+				if (!isPreviewVisible) {
+					this.togglePreview(true, 0, false, true);
+				}
+				var editorBottom = bottomPositionTest.appendTo(this.editorWrap).offset().top,
+					previewBottom = bottomPositionTest.appendTo(this.previewWrap).offset().top;
+				bottomPositionTest.detach();
+				if (!isPreviewVisible) {
+					this.togglePreview(false, 0, false, true);
+				}
+				var diffHeights = editorBottom - previewBottom;
+				this.preview.height("+=" + diffHeights);
+				
+				var deltaWrapHeight = originalBottommarginTop - this.bottommargin.offset().top;
+				this.editor.height("+=" + deltaWrapHeight);
+				this.preview.height("+=" + deltaWrapHeight);
+				this._checkHeightsManaged("sidebyside", true);
+			} else {
+				if (!isPreviewVisible) {
+					this.togglePreview(true, 0, false, true);
+				}
+				var originalWrapHeight = this.wrap.height();
+				this.editorWrap.css("width", "");
+				this._checkHeightsManaged("sidebyside", false);
+				this.wrap.removeClass("sidebyside");
+				
+				var deltaBottommarginTop = this.bottommargin.offset().top - originalBottommarginTop;
+				this.lastWrapHeight = originalWrapHeight + deltaBottommarginTop;
+				this.adjustHeights(originalWrapHeight);
+				this.lastWrapHeight = originalWrapHeight;
+				if (!isPreviewVisible) {
+					this.togglePreview(false, 0, false, true);
+				}
+			}
+			
+			return this;	// Chaining
+		},
+		isPreviewCollapses: function() {
+			return this._previewCollapses;
+		},
+		toggltPreviewCollapses: function(previewCollapses, force) {
+			previewCollapses = checkToggleState(previewCollapses, this._previewCollapses, force);
+			if (previewCollapses === undefined) {
+				return this;	// Chaining
+			}
+			
+			this._previewCollapsesNot = previewCollapses;
+			this._checkHeightsManaged();
+			
+			return this;	// Chaining
+		},
+		_isHeightsManaged: function() {
 			return this._heightsManaged;
 		},
-		toggleHeightsManaged: function(managed, force) {
+		_toggleHeightsManaged: function(managed, force) {
 			managed = checkToggleState(managed, this._heightsManaged, force);
 			if (managed === undefined) {
 				return this;	// Chaining
@@ -664,18 +781,37 @@
 			
 			return this;	// Chaining
 		},
+		_checkHeightsManaged: function(change, value, force) {
+			var previewCollapses = change === "previewCollapses" ? value : this._previewCollapses,
+				fullscreen = change === "fullscreen" ? value : this.isFullscreen(),
+				sidebyside = change === "sidebyside" ? value : this.isSidebyside(),
+				manage = !previewCollapses || fullscreen || sidebyside;
+			if (force || manage !== this._heightsManaged) {
+				this._toggleHeightsManaged(manage, force);
+			}
+		},
 		// When the wrap height changes, this will resize the editor and the preview,
 		// keeping the height ratio between them.
 		adjustHeights: function(wrapHeight) {
-			var isPreviewVisible = this.isPreviewVisible(),
-				editorHeight = this.editor.height(),
-				previewHeight = isPreviewVisible ? this.preview.height() : 0,
-				availableHeight = editorHeight + previewHeight + (wrapHeight - this.lastWrapHeight),
+			// To avoid document reflow, we only set the values at the end.
+			var heights;
+			if (this.isSidebyside()) {
+				var deltaHeight = wrapHeight - this.lastWrapHeight;
+				heights = {
+					editorHeight: this.editor.height() + deltaHeight,
+					previewHeight: this.preview.height() + deltaHeight
+				};
+			} else {
+				var isPreviewVisible = this.isPreviewVisible(),
+					editorHeight = this.editor.height(),
+					previewHeight = isPreviewVisible ? this.preview.height() : 0,
+					availableHeight = editorHeight + previewHeight + (wrapHeight - this.lastWrapHeight);
 				heights = computeHeights(availableHeight, this.lastEditorPercentHeight);
-			if (!isPreviewVisible) {
-				// Keep the previewHeight for when the preview will slide down again.
-				// But allow editorHeight to take the whole available height:
-				heights.editorHeight = editorHeight + (wrapHeight - this.lastWrapHeight);
+				if (!isPreviewVisible) {
+					// Keep the previewHeight for when the preview will slide down again.
+					// But allow editorHeight to take the whole available height:
+					heights.editorHeight = editorHeight + (wrapHeight - this.lastWrapHeight);
+				}
 			}
 			this.editor.height(heights.editorHeight);
 			this.preview.height(heights.previewHeight);

@@ -23,10 +23,6 @@ user-select: none;
 	overflow: hidden;
 }
 
-.meltdown_wrap.heightsManaged {
-	resize: vertical;
-}
-
 /* Allow the margins to collapse with the other childrens of .meltdown_wrap: */
 .meltdown_topmargin {
 	margin-bottom: 5px;
@@ -138,8 +134,7 @@ you can use the generic selector below, but it's slower:
 =======================================================================*/
 
 .meltdown_editor-wrap {
-	position: relative;
-	margin: 5px 0;
+	margin: 3px 0 5px;
 }
 
 .meltdown_editor-deco {
@@ -164,8 +159,6 @@ you can use the generic selector below, but it's slower:
 	min-height: 15px;
 }
 
-.meltdown_wrap.heightsManaged .meltdown_editor {
-	resize: none;
 }
 
 
@@ -376,7 +369,7 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 =======================================================================*/
 
 .meltdown_preview-wrap {
-	margin: 5px 0;
+	margin: 3px 0 5px;
 }
 
 .meltdown_preview-header {
@@ -421,8 +414,35 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	min-height: 15px;
 }
 
+
+/* HeightsManaged
+=======================================================================*/
+
+.meltdown_wrap.heightsManaged {
+	resize: vertical;
+}
+
+.meltdown_wrap.heightsManaged .meltdown_editor {
+	resize: none;
+}
+
 .meltdown_wrap.heightsManaged .meltdown_preview {
 	resize: none;
+}
+
+
+/* Sidebyside
+=======================================================================*/
+
+.meltdown_wrap.sidebyside .meltdown_editor-wrap,
+.meltdown_wrap.sidebyside .meltdown_preview-wrap {
+	display: table-cell;
+	vertical-align: top;
+}
+
+.meltdown_wrap.sidebyside .meltdown_editor-wrap,
+.meltdown_wrap.sidebyside .meltdown_preview-wrap {
+	width: 50%;
 }
 
 
@@ -442,6 +462,7 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	-webkit-border-radius: 0;
 	border-radius: 0;
 	z-index: 1000;
+	resize: none;
 }
 
 
