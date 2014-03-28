@@ -65,7 +65,7 @@
 			sidebyside: false,
 			
 			// Should the preview be visible by default ?
-			openPreview: true,
+			openPreview: false,
 			
 			// A CSS height or "editorHeight" or "auto" (to let the height adjust to the content).
 			previewHeight: "editorHeight",
@@ -192,18 +192,14 @@
 				label: "Hide",
 				altText: "Hide preview",
 				click: function(meltdown, def, control) {
-					if (!control.hasClass('disabled')) {
-						meltdown.togglePreview(false);
-					}
+					meltdown.togglePreview(false);
 				}
 			},
 			showpreview: {
 				label: "Show",
 				altText: "Show preview",
 				click: function(meltdown, def, control) {
-					if (!control.hasClass('disabled')) {
-						meltdown.togglePreview(true);
-					}
+					meltdown.togglePreview(true);
 				}
 			},
 			fullscreen: {
@@ -239,7 +235,7 @@
 	
 	function addControlEventHandler(meltdown, def, control) {
 		var editor = meltdown.editor,
-			handler = function () {
+			execAction = function () {
 				var text, selection, before, placeholder, after, lineStart, lineEnd, charBefore, charAfter;
 				before = def.before || "";
 				placeholder =  def.placeholder || "";
@@ -291,13 +287,15 @@
 			};
 		
 		control.click(function (e) {
-			if (def.click) {
-				def.click(meltdown, def, control, handler);
-			} else {
-				handler();
+			if (!control.hasClass('disabled')) {
+				if (def.click) {
+					def.click(meltdown, def, control, execAction);
+				} else {
+					execAction();
+				}
+				meltdown.update();
 			}
 			editor.focus();
-			editor.keyup();
 			e.preventDefault();
 		});
 	}

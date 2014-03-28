@@ -146,7 +146,6 @@ you can use the generic selector below, but it's slower:
 	border-radius: 3px;
 }
 .meltdown_editor-deco.focus {
-	outline: none;
 	border-color: #5c8cd0;
 }
 
@@ -159,6 +158,8 @@ you can use the generic selector below, but it's slower:
 	min-height: 15px;
 }
 
+.meltdown_editor {
+	outline: none;
 }
 
 
