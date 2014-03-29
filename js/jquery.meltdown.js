@@ -40,6 +40,7 @@
 			// Use $.meltdown.controlsGroup() to make groups and subgroups of controls.
 			// The available control names come from the keys of $.meltdown.controlDefs (see below)
 			controls: controlsGroup("", "", [
+				"preview",
 				"bold",
 				"italics",
 				"ul",
@@ -58,8 +59,7 @@
 					"hr"
 				]),
 				"fullscreen",
-				"sidebyside",
-				"preview"
+				"sidebyside"
 			]),
 			
 			// If true, editor and preview will be displayed side by side instead of one on the other.
@@ -305,7 +305,7 @@
 		var controlList = $('<ul />');
 		if (subGroup) {
 			controlList.css("display", "none");
-			controlList.addClass(plgName + '_controlgroup-dropdown ' + plgName + "_controlgroup-" + controlsGroup.plgName);
+			controlList.addClass(plgName + "_controlgroup-" + controlsGroup.plgName + " " + plgName + '_controlgroup-dropdown');
 		} else {
 			controlList.addClass("meltdown_controls");
 		}
@@ -324,12 +324,12 @@
 					debug("Control not found: " + controlName);
 					continue;
 				}
-				control.addClass(plgName + '_control ' + plgName + "_control-" + controlName + ' ' + (def.styleClass || ""));
+				control.addClass(plgName + "_control-" + controlName + " " + plgName + '_control ' + (def.styleClass || ""));
 				span.text(def.label).attr("title", def.altText);
 				addControlEventHandler(meltdown, def, control);
 				
 			} else if ($.isArray(controlName)) {
-				control.addClass(plgName + '_controlgroup ' + plgName + "_controlgroup-" + controlName.name);
+				control.addClass(plgName + "_controlgroup-" + controlName.name + " " + plgName + '_controlgroup');
 				span.text(controlName.label).append('<i class="meltdown-icon-caret-down" />');
 				addGroupClickHandler(control);
 				control.append(buildControls(meltdown, controlName, true));
@@ -359,7 +359,7 @@
 	
 	// Setup event handlers for the resize handle:
 	function setupResizeHandle(resizeHandle, firstElem, lastElem, vertical, meltdown) {
-		resizeHandle.addClass("meltdown_handle meltdown_handle-" + (vertical ? "vert" : "horiz"));
+		resizeHandle.addClass("meltdown_handle-" + (vertical ? "vert" : "horiz") + " meltdown_handle");
 		var propName = vertical ? "height" : "width",
 			maxPropName = vertical ? "maxHeight" : "maxWidth",
 			pageName = vertical ? "pageY" : "pageX",
@@ -487,7 +487,7 @@
 			this.preview.height(previewHeight);
 			
 			// Build toolbar:
-			buildControls(this, this._options.controls).appendTo(this.bar);
+			this.controls = buildControls(this, this._options.controls).appendTo(this.bar);
 			addWarning(this, this.previewHeader.find(".meltdown_techpreview"));
 			
 			// editorDeco's CSS need a bit of help:
@@ -509,6 +509,7 @@
 			
 			// Insert meltdown in the document:
 			this.editor.after(this.wrap).appendTo(this.editorDeco);
+			this._checkToolbarOverflowedControls();
 			
 			// Setup display state (preview open and _heightsManaged):
 			this._previewCollapses = _options._previewCollapses;
@@ -530,7 +531,7 @@
 			this.lastWrapHeight = wrapHeight;
 			this.lastEditorPercentWidth = 0.5;
 			this.lastEditorPercentHeight = editorHeight / (editorHeight + previewHeight);
-			addResizeListener(this.wrap[0], $.proxy(this.wrapResizeListener, this));
+			addResizeListener(this.wrap[0], $.proxy(this._wrapResizeListener, this));
 			
 			// Now that all measures were made, we can close the preview if needed:
 			if (!_options.openPreview) {
@@ -690,7 +691,7 @@
 				this.wrap.removeClass('fullscreen');
 				
 				if (this._isHeightsManaged()) {
-					this.adjustHeights(data.originalWrapHeight);
+					this._adjustHeights(data.originalWrapHeight);
 					this.lastWrapHeight = data.originalWrapHeight;
 				} else {
 					var sizes = splitSize(data.availableHeight, this.lastEditorPercentHeight, 15);
@@ -700,7 +701,7 @@
 				this._checkHeightsManaged("fullscreen", false);
 				this.wrap[0].style.height = data.originalWrapStyleHeight;
 			}
-			this.wrapResizeListener();
+			this._wrapResizeListener();
 			
 			return this;	// Chaining
 		},
@@ -717,7 +718,7 @@
 				originalBottommarginTop = this.bottommargin.offset().top;
 			if (sidebyside) {
 				this.wrap.addClass("sidebyside");
-				this.adjustWidths(this.wrap.width());
+				this._adjustWidths(this.wrap.width());
 				if (!isPreviewVisible) {
 					this.togglePreview(true, 0, false, true);
 				}
@@ -747,7 +748,7 @@
 				
 				var deltaBottommarginTop = this.bottommargin.offset().top - originalBottommarginTop;
 				this.lastWrapHeight = originalWrapHeight + deltaBottommarginTop;
-				this.adjustHeights(originalWrapHeight);
+				this._adjustHeights(originalWrapHeight);
 				this.lastWrapHeight = originalWrapHeight;
 				if (!isPreviewVisible) {
 					this.togglePreview(false, 0, false, true);
@@ -797,16 +798,17 @@
 				this._toggleHeightsManaged(manage, force);
 			}
 		},
-		wrapResizeListener: function() {
+		_wrapResizeListener: function() {
 			var newWidth = this.wrap.width(),
 				newHeight = this.wrap.height();
 			if (newWidth !== this.lastWrapWidth) {
-				this.adjustWidths(newWidth);
+				this._checkToolbarOverflowedControls();
+				this._adjustWidths(newWidth);
 				this.lastWrapWidth = newWidth;
 			}
 			if (newHeight !== this.lastWrapHeight) {
 				if (this._heightsManaged) {
-					this.adjustHeights(newHeight);
+					this._adjustHeights(newHeight);
 				} else {
 					var editorHeight = this.editor.height();
 					this.lastEditorPercentHeight = editorHeight / (editorHeight + this.preview.height());
@@ -816,7 +818,7 @@
 		},
 		// When the wrap height changes, this will resize the editor and the preview,
 		// keeping the height ratio between them.
-		adjustHeights: function(wrapHeight) {
+		_adjustHeights: function(wrapHeight) {
 			// To avoid document reflow, we only set the values at the end.
 			var sizes;
 			if (this.isSidebyside()) {
@@ -842,7 +844,7 @@
 			
 			return this;	// Chaining
 		},
-		adjustWidths: function(wrapWidth) {
+		_adjustWidths: function(wrapWidth) {
 			if (this.isSidebyside()) {
 				var sizes = splitSize(wrapWidth, this.lastEditorPercentWidth, 60);
 				if (!this.isPreviewVisible()) {
@@ -852,6 +854,46 @@
 				this.previewWrap.width(sizes.lastSize);
 				this.editorWrap[0].style.maxWidth = sizes.firstSize + "px";
 				this.previewWrap[0].style.maxWidth = sizes.lastSize + "px";
+			}
+			
+			return this;	// Chaining
+		},
+		// Call this to manage controls that are overflowing the toolbar
+		// when its width changes:
+		_checkToolbarOverflowedControls: function() {
+			var controls = this.controls.children(),
+				control = $(controls[0]),
+				defaultTop = control.position().top,
+				foundOverflowed = false;
+			
+			// First we look for overflowed controls:
+			for (var i = controls.length - 1; i > 1; i--) {
+				control = $(controls[i]);
+				if (control.hasClass("overflowedControl")) {
+					continue;
+				}
+				else if (control.position().top <= defaultTop) {
+					break;
+				}
+				control.addClass("overflowedControl");
+				foundOverflowed = true;
+			}
+			
+			// If no new overflowed control was found,
+			// then look for controls that are no more overflowed:
+			if (!foundOverflowed) {
+				for (; i < controls.length; i++) {
+					control = $(controls[i]);
+					if (!$(controls[i]).hasClass("overflowedControl")) {
+						continue
+					}
+					// Test if it would overflow:
+					control.removeClass("overflowedControl");
+					if(control.position().top > defaultTop) {
+						control.addClass("overflowedControl");
+						break;
+					}
+				}
 			}
 			
 			return this;	// Chaining
