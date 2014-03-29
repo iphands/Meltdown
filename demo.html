@@ -40,11 +40,12 @@ A jQuery plugin that lets you code out unfastened, and a toolbar for common cool
 <script type="text/javascript">
 jQuery(document).ready(function($) {
 	// Variables are exposed on the window object for easy testings in your console:
-	window.m1 = $('#meltdown1').meltdown();
-	window.m2 = $('#meltdown2').meltdown({
+	window.m1 = $('#meltdown1').meltdown({
 		openPreview: true,
-		heightsManaged: true,
 		previewHeight: "auto"
+	});
+	window.m2 = $('#meltdown2').meltdown({
+		previewCollapses: false
 	});
 	// And this for debugging:
 	window.mm1 = m1.data("Meltdown");

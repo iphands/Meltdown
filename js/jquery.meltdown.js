@@ -192,21 +192,21 @@
 			fullscreen: {
 				label: "Fullscreen",
 				altText: "Toggle fullscreen",
-				click: function(meltdown, def, control) {
+				click: function(meltdown /*, def, control, execAction */) {
 					meltdown.toggleFullscreen();
 				}
 			},
 			sidebyside: {
 				label: "Sidebyside",
 				altText: "Toggle sidebyside",
-				click: function(meltdown, def, control) {
+				click: function(meltdown /*, def, control, execAction */) {
 					meltdown.toggleSidebyside();
 				}
 			},
 			preview: {
 				label: "Preview",
 				altText: "Toggle preview",
-				click: function(meltdown, def, control) {
+				click: function(meltdown /*, def, control, execAction */) {
 					meltdown.togglePreview();
 				}
 			}
@@ -316,7 +316,7 @@
 				span = $('<span />').appendTo(control);
 			if ($.type(controlName) === "string") {
 				if (controlName === "|") {	// Separator
-					controlList.append(control.addClass(plgName + '_controlsep'))
+					controlList.append(control.addClass(plgName + '_controlsep'));
 					continue;
 				}
 				var def = $.meltdown.controlDefs[controlName];
@@ -574,12 +574,12 @@
 				previewWrapMargin = parseFloat(this.previewWrap.css("marginBottom")),
 				previewWrapHeightStart = show ? -previewWrapMargin : this.previewWrap.outerHeight(),
 				availableHeight = editorHeight + previewWrapHeightStart,
-				progress = this._isHeightsManaged() ? function(animation, progress) {
+				progress = this._isHeightsManaged() ? function(/* animation, progress */) {
 					self.editor.height(availableHeight - self.previewWrap.outerHeight());
 				} : $.noop,
 				editorWrapWidth = this.editorWrap.width(),
 				previewWrapWidth = show ? 0 : this.previewWrap.width(),
-				sidebysideStep = function (now) {
+				sidebysideStep = function (now /*, fx */) {
 					self.previewWrap[0].style.maxWidth = now + "px";
 					self.editorWrap.width(editorWrapWidth + (previewWrapWidth - now));
 				};
