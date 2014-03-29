@@ -129,7 +129,6 @@ you can use the generic selector below, but it's slower:
 =======================================================================*/
 
 .meltdown_editor-wrap {
-	margin: 3px 0 5px;
 }
 
 .meltdown_editor-deco {
@@ -161,14 +160,27 @@ you can use the generic selector below, but it's slower:
 /* Resize handle
 =======================================================================*/
 
-.meltdown_handle-horiz {
+
+.sidebyside .meltdown_preview-wrap2 {
+	position: relative;
+	padding-left: 8px;
+}
+.meltdown_resizehandle {
+	text-align: center;
+	margin: -2px 0 -5px;
+	font-size: 12px;
+}
+.meltdown_resizehandle > span:before {
+	content: "•";
+	color: #686868;
+}
+
+.meltdown_resizehandle-horiz {
 	cursor: auto;
 }
-
-.meltdown_handle-vert {
+.meltdown_resizehandle-vert {
 	cursor: row-resize;
 }
-
 
 
 /* Meltdown Toolbar
@@ -378,11 +390,12 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	display: none;
 }
 
+
 /* Meltdown Preview
 =======================================================================*/
 
 .meltdown_preview-wrap {
-	margin: 3px 0 5px;
+	overflow: hidden;	/* Prevent resizeHandle's negative margins from adding extra pixels to the height. */
 }
 
 .meltdown_preview-header {
@@ -456,11 +469,25 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	vertical-align: top;
 }
 
-.sidebyside .meltdown_handle-vert {
-	cursor: auto;
+.sidebyside .meltdown_resizehandle {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 10px;
+	margin: 0;
+}
+.sidebyside .meltdown_resizehandle > span {
+	position: absolute;
+	top: 50%;
+	left: 2px;
+	margin-top: -4px;
 }
 
-.sidebyside .meltdown_handle-horiz {
+.sidebyside .meltdown_resizehandle-vert {
+	cursor: auto;
+}
+.sidebyside .meltdown_resizehandle-horiz {
 	cursor: col-resize;
 }
 

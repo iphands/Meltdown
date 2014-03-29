@@ -359,9 +359,8 @@
 	
 	// Setup event handlers for the resize handle:
 	function setupResizeHandle(resizeHandle, firstElem, lastElem, vertical, meltdown) {
-		resizeHandle.addClass("meltdown_handle-" + (vertical ? "vert" : "horiz") + " meltdown_handle");
+		resizeHandle.addClass("meltdown_resizehandle-" + (vertical ? "vert" : "horiz"));
 		var propName = vertical ? "height" : "width",
-			maxPropName = vertical ? "maxHeight" : "maxWidth",
 			pageName = vertical ? "pageY" : "pageX",
 			lastEditorPercentName = vertical ? "lastEditorPercentHeight" : "lastEditorPercentWidth",
 			minSize = vertical ? 15 : 60;
@@ -405,6 +404,7 @@
 			doc.on("mousemove", moveEventHandler).one("mouseup", function() {
 				doc.off("mousemove", moveEventHandler);
 				body.removeClass("unselectable");
+				meltdown.editor.focus();
 			});
 			// Prevent text selection while dragging:
 			body.addClass("unselectable");
@@ -473,9 +473,10 @@
 			this.editorWrap =  $('<div class="' + plgName + '_editor-wrap" />').appendTo(this.wrap);
 			this.editorDeco =  $('<div class="' + plgName + '_editor-deco" />').appendTo(this.editorWrap);
 			this.editor = this.element.addClass("meltdown_editor");
-			this.previewWrap =  $('<div class="' + plgName + '_preview-wrap"></div>').appendTo(this.wrap);
+			this.previewWrap =  $('<div class="' + plgName + '_preview-wrap" />').appendTo(this.wrap);
+			this.resizeHandle = $('<div class="' + plgName + '_resizehandle"><span></span></div>').appendTo(this.previewWrap);
 			this.previewHeader =  $('<span class="' + plgName + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
-			this.preview =  $('<div class="' + plgName + '_preview"></div>').appendTo(this.previewWrap);
+			this.preview =  $('<div class="' + plgName + '_preview" />').appendTo(this.previewWrap);
 			this.bottommargin = $('<div class="' + plgName + '_bottommargin"/>').appendTo(this.wrap);
 			
 			// Setup meltdown sizes:
@@ -497,8 +498,12 @@
 				self.editorDeco.removeClass("focus");
 			});
 			
-			setupResizeHandle(this.previewHeader, this.editor, this.preview, true, this);
-			setupResizeHandle(this.previewHeader, this.editorWrap, this.previewWrap, false, this);
+			// Need to put a div in the wrap to allow absolute positioning for child elements.
+			// Bug in FF < 31: https://bugzilla.mozilla.org/show_bug.cgi?id=63895
+			this.previewWrap2 = $('<div class="' + plgName + '_preview-wrap2"></div>').appendTo(this.previewWrap);
+			this.previewWrap2.append(this.resizeHandle, this.previewHeader, this.preview);
+			setupResizeHandle(this.resizeHandle, this.editor, this.preview, true, this);
+			setupResizeHandle(this.resizeHandle, this.editorWrap, this.previewWrap, false, this);
 			
 			// Setup update:
 			this.debouncedUpdate = debounce(this.update, 350, this);
@@ -885,7 +890,7 @@
 				for (; i < controls.length; i++) {
 					control = $(controls[i]);
 					if (!$(controls[i]).hasClass("overflowedControl")) {
-						continue
+						continue;
 					}
 					// Test if it would overflow:
 					control.removeClass("overflowedControl");
