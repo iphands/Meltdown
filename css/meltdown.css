@@ -192,18 +192,17 @@ ul.meltdown_controls {
 	list-style: none;
 }
 li.meltdown_control,
-li.meltdown_controlgroup {
+li.meltdown_controlgroup,
+li.meltdown_controlsep {
 	position: relative;
 	float: left;
 	margin: 0 0 0 5px;
 	padding: 0;
 }
-	.meltdown_controls li.meltdown_control-showpreview,
-	.meltdown_controls li.meltdown_control-hidepreview { float: right; margin-right: 5px; }
-	.meltdown_controls li.meltdown_control-table,
-	.meltdown_controls li.meltdown_controlgroup-kitchenSink { padding-left: 5px; border-left: 1px solid #ccc; }
+.meltdown_controls li.meltdown_control-preview { float: right; margin-right: 5px; }
 li.meltdown_control span,
-li.meltdown_controlgroup > span {
+li.meltdown_controlgroup > span,
+li.meltdown_controlsep span {
 	float: left;
 	padding: 6px;
 	line-height: 1em;
@@ -217,6 +216,14 @@ li.meltdown_controlgroup > span {
 	font-size: 12px;
 	cursor: pointer;
 }
+.meltdown_controls li.meltdown_controlsep span {
+	min-width: 1px;
+	width: 1px;
+	background-color: #ccc;
+	padding-right: 0;
+	padding-left: 0;
+	cursor: auto;
+}
 li.meltdown_control:hover span,
 li.meltdown_control:focus span {
 	color: #06c;
@@ -227,8 +234,7 @@ li.meltdown_control:focus span {
 .meltdown_controls li.meltdown_control-ol span,
 .meltdown_controls li.meltdown_control-hr span,
 .meltdown_controls li.meltdown_control-table span,
-.meltdown_controls li.meltdown_control-showpreview span,
-.meltdown_controls li.meltdown_control-hidepreview span,
+.meltdown_controls li.meltdown_control-preview span,
 .meltdown_controls li.meltdown_control-link span,
 .meltdown_controls li.meltdown_control-img span,
 .meltdown_controls li.meltdown_control-blockquote span,
@@ -247,8 +253,7 @@ li.meltdown_control:focus span {
 .meltdown_controls li.meltdown_control-ol span:before,
 .meltdown_controls li.meltdown_control-hr span:before,
 .meltdown_controls li.meltdown_control-table span:before,
-.meltdown_controls li.meltdown_control-showpreview span:before,
-.meltdown_controls li.meltdown_control-hidepreview span:before,
+.meltdown_controls li.meltdown_control-preview span:before,
 .meltdown_controls li.meltdown_control-link span:before,
 .meltdown_controls li.meltdown_control-img span:before,
 .meltdown_controls li.meltdown_control-blockquote span:before,
@@ -291,18 +296,12 @@ li.meltdown_control:focus span {
 .meltdown_controls li.meltdown_control-table span:before {
 	content: "\74";
 }
-.meltdown_controls li.meltdown_control-showpreview span:before {
+.meltdown_controls li.meltdown_control-preview span:before {
 	content: "\73";
 }
-.meltdown_controls li.meltdown_control-hidepreview span:before {
+.meltdown_wrap.openpreview .meltdown_controls li.meltdown_control-preview span:before {
 	content: "\68"; /* Toggle to Closed Eye */
 	color: #06c;
-}
-.meltdownpreviewvisible .meltdown_controls li.meltdown_control-showpreview {
-	display: none;
-}
-.meltdownpreviewinvisible .meltdown_controls li.meltdown_control-hidepreview {
-	display: none;
 }
 .meltdown_controls li.meltdown_controlgroup-kitchenSink > span:before {
 	content: "\2b";

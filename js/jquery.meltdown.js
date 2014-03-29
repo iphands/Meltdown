@@ -44,8 +44,10 @@
 				"italics",
 				"ul",
 				"ol",
+				"|",
 				"table",
 				controlsGroup("h", "Headers", ["h1", "h2", "h3", "h4", "h5", "h6"]),
+				"|",
 				controlsGroup("kitchenSink", "Kitchen Sink", [
 					"link",
 					"img",
@@ -57,8 +59,7 @@
 				]),
 				"fullscreen",
 				"sidebyside",
-				"hidepreview",
-				"showpreview"
+				"preview"
 			]),
 			
 			// If true, editor and preview will be displayed side by side instead of one on the other.
@@ -188,32 +189,25 @@
 				placeholder: "",
 				isBlock: true
 			},
-			hidepreview: {
-				label: "Hide",
-				altText: "Hide preview",
-				click: function(meltdown, def, control) {
-					meltdown.togglePreview(false);
-				}
-			},
-			showpreview: {
-				label: "Show",
-				altText: "Show preview",
-				click: function(meltdown, def, control) {
-					meltdown.togglePreview(true);
-				}
-			},
 			fullscreen: {
 				label: "Fullscreen",
-				altText: "Fullscreen",
+				altText: "Toggle fullscreen",
 				click: function(meltdown, def, control) {
 					meltdown.toggleFullscreen();
 				}
 			},
 			sidebyside: {
 				label: "Sidebyside",
-				altText: "Sidebyside",
+				altText: "Toggle sidebyside",
 				click: function(meltdown, def, control) {
 					meltdown.toggleSidebyside();
+				}
+			},
+			preview: {
+				label: "Preview",
+				altText: "Toggle preview",
+				click: function(meltdown, def, control) {
+					meltdown.togglePreview();
 				}
 			}
 		}
@@ -321,6 +315,10 @@
 				control = $('<li />'),
 				span = $('<span />').appendTo(control);
 			if ($.type(controlName) === "string") {
+				if (controlName === "|") {	// Separator
+					controlList.append(control.addClass(plgName + '_controlsep'))
+					continue;
+				}
 				var def = $.meltdown.controlDefs[controlName];
 				if (def === undefined) {
 					debug("Control not found: " + controlName);
@@ -453,7 +451,7 @@
 			this.editorPreInitOuterWidth = this.element.outerWidth();
 			
 			// Setup everything detached from the document:
-			this.wrap = $('<div class="' + plgName + '_wrap ' + plgName + 'previewvisible" />');
+			this.wrap = $('<div class="' + plgName + '_wrap openpreview" />');
 			this.topmargin = $('<div class="' + plgName + '_topmargin"/>').appendTo(this.wrap);
 			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.wrap);
 			this.editorWrap =  $('<div class="' + plgName + '_editor-wrap" />').appendTo(this.wrap);
@@ -559,7 +557,7 @@
 			return this;	// Chaining
 		},
 		isPreviewVisible: function() {
-			return this.wrap.hasClass(plgName + 'previewvisible');
+			return this.wrap.hasClass("openpreview");
 		},
 		togglePreview: function(show, duration, force, noUpdate) {
 			show = checkToggleState(show, this.isPreviewVisible(), force);
@@ -587,7 +585,7 @@
 				};
 			
 			if (show) {
-				this.wrap.removeClass(plgName + 'previewinvisible').addClass(plgName + 'previewvisible');
+				this.wrap.addClass("openpreview");
 				if (!noUpdate) {
 					this.update();
 				}
@@ -651,7 +649,7 @@
 						}
 					}
 				}
-				this.wrap.removeClass(plgName + 'previewvisible').addClass(plgName + 'previewinvisible');
+				this.wrap.removeClass("openpreview");
 			}
 			
 			return this;	// Chaining
@@ -676,7 +674,7 @@
 				this.wrap.addClass('fullscreen');
 				var self = this;
 				doc.on("keypress." + plgName + ".fullscreenEscKey", function(e) {
-					if(e.keyCode === 27) {	// Esc key
+					if (e.keyCode === 27) {	// Esc key
 						self.toggleFullscreen(false);
 					}
 				});
