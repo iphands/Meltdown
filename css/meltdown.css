@@ -31,11 +31,6 @@ user-select: none;
 	margin-top: 5px;
 }
 
-.meltdown_handle {
-	cursor: ns-resize;
-}
-
-
 /* Meltdown Font Icons
 =======================================================================*/
 
@@ -161,6 +156,19 @@ you can use the generic selector below, but it's slower:
 .meltdown_editor {
 	outline: none;
 }
+
+
+/* Resize handle
+=======================================================================*/
+
+.meltdown_handle-horiz {
+	cursor: auto;
+}
+
+.meltdown_handle-vert {
+	cursor: row-resize;
+}
+
 
 
 /* Meltdown Toolbar
@@ -396,6 +404,9 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	-moz-border-radius-topright: 3px;
 	border-top-left-radius: 3px;
 	border-top-right-radius: 3px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .meltdown_preview {
@@ -440,9 +451,12 @@ li.meltdown_controlgroup li span { display: block; float: none; }
 	vertical-align: top;
 }
 
-.meltdown_wrap.sidebyside .meltdown_editor-wrap,
-.meltdown_wrap.sidebyside .meltdown_preview-wrap {
-	width: 50%;
+.sidebyside .meltdown_handle-vert {
+	cursor: auto;
+}
+
+.sidebyside .meltdown_handle-horiz {
+	cursor: col-resize;
 }
 
 

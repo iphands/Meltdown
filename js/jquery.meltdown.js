@@ -358,32 +358,48 @@
 	}
 	
 	// Setup event handlers for the resize handle:
-	function setupResizeHandle(resizeHandle, meltdown) {
-		var firstElem, lastElem, startY, minY, maxY, originalFirstElemHeight, originalLastElemHeight;
-		var moveEventHandler = function(e) {
-				var delta = Math.min(Math.max(e.pageY , minY), maxY) - startY,
-					firstElemHeight = originalFirstElemHeight + delta,
-					lastElemHeight = originalLastElemHeight - delta;
-				firstElem.height(firstElemHeight);
-				lastElem.height(lastElemHeight);
+	function setupResizeHandle(resizeHandle, firstElem, lastElem, vertical, meltdown) {
+		resizeHandle.addClass("meltdown_handle meltdown_handle-" + (vertical ? "vert" : "horiz"));
+		var propName = vertical ? "height" : "width",
+			maxPropName = vertical ? "maxHeight" : "maxWidth",
+			pageName = vertical ? "pageY" : "pageX",
+			lastEditorPercentName = vertical ? "lastEditorPercentHeight" : "lastEditorPercentWidth",
+			minSize = vertical ? 15 : 60;
+		
+		var startPos, minPos, maxPos, originalFirstElemSize, originalLastElemSize,
+			moveEventHandler = function(e) {
+				var delta = Math.min(Math.max(e[pageName] , minPos), maxPos) - startPos,
+					firstElemSize = originalFirstElemSize + delta,
+					lastElemSize = originalLastElemSize - delta;
+				firstElem[propName](firstElemSize);
+				lastElem[propName](lastElemSize);
+				if (!vertical) {
+					firstElem[0].style.maxWidth = firstElemSize + "px";
+					lastElem[0].style.maxWidth = lastElemSize + "px";
+				}
 				
-				var editorHeight = firstElem[0] === meltdown.editor[0] ? firstElemHeight : lastElemHeight;
-				meltdown.lastEditorPercentHeight = editorHeight / (firstElemHeight + lastElemHeight);
+				var editorElem = vertical ? meltdown.editor[0] : meltdown.editorWrap[0],
+					editorSize = firstElem[0] === editorElem ? firstElemSize : lastElemSize;
+				meltdown[lastEditorPercentName] = editorSize / (firstElemSize + lastElemSize);
 			};
+		
 		// Init dragging handlers only on mousedown:
 		resizeHandle.on("mousedown", function(e) {
+			if (meltdown.isSidebyside() === vertical) {
+				return;
+			}
 			// Sort elems in document order:
-			var elems = meltdown.editor.add(meltdown.preview);
+			var elems = firstElem.add(lastElem);
 			// The first elem is assumed to be before resizeHandle, and the last is after:
 			firstElem = elems.first();
 			lastElem = elems.last();
 			
 			// Init dragging properties:
-			startY = e.pageY;
-			originalFirstElemHeight = firstElem.height();
-			originalLastElemHeight = lastElem.height();
-			minY = startY - originalFirstElemHeight + 15;
-			maxY = startY + originalLastElemHeight - 15;
+			startPos = e[pageName];
+			originalFirstElemSize = firstElem[propName]();
+			originalLastElemSize = lastElem[propName]();
+			minPos = startPos - originalFirstElemSize + minSize;
+			maxPos = startPos + originalLastElemSize - minSize;
 			
 			// Setup event handlers:
 			doc.on("mousemove", moveEventHandler).one("mouseup", function() {
@@ -422,17 +438,17 @@
 		return newState;
 	}
 	
-	function computeHeights(availableHeight, lastEditorPercentHeight) {
-		var editorHeight = Math.round(lastEditorPercentHeight * availableHeight),
-			previewHeight = availableHeight - editorHeight;
-		if (editorHeight < 15) {
-			previewHeight -= 15 - editorHeight;
-			editorHeight = 15;
-		} else if (previewHeight < 15) {
-			editorHeight -= 15 - previewHeight;
-			previewHeight = 15;
+	function splitSize(availableSize, firstPercentSize, minSize) {
+		var firstSize = Math.round(firstPercentSize * availableSize),
+			lastSize = availableSize - firstSize;
+		if (firstSize < minSize) {
+			lastSize -= minSize - firstSize;
+			firstSize = minSize;
+		} else if (lastSize < minSize) {
+			firstSize -= minSize - lastSize;
+			lastSize = minSize;
 		}
-		return {editorHeight: editorHeight, previewHeight: previewHeight};
+		return {firstSize: firstSize, lastSize: lastSize};
 	}
 	
 	
@@ -481,7 +497,8 @@
 				self.editorDeco.removeClass("focus");
 			});
 			
-			setupResizeHandle(this.previewHeader.addClass("meltdown_handle"), this);
+			setupResizeHandle(this.previewHeader, this.editor, this.preview, true, this);
+			setupResizeHandle(this.previewHeader, this.editorWrap, this.previewWrap, false, this);
 			
 			// Setup update:
 			this.debouncedUpdate = debounce(this.update, 350, this);
@@ -509,21 +526,11 @@
 			this.wrap.css("minHeight", wrapHeight - editorHeight - previewHeight + minWrapHeights);
 			
 			// Setup editor and preview resizing when wrap is resized:
-			this.lastEditorPercentHeight = editorHeight / (editorHeight + previewHeight);
+			this.lastWrapWidth = this.wrap.width();
 			this.lastWrapHeight = wrapHeight;
-			this._wrapResizeListener = function() {
-				var newHeight = self.wrap.height();
-				if (newHeight !== self.lastWrapHeight) {
-					if (self._heightsManaged) {
-						self.adjustHeights(newHeight);
-					} else {
-						var editorHeight = self.editor.height();
-						self.lastEditorPercentHeight = editorHeight / (editorHeight + self.preview.height());
-					}
-					self.lastWrapHeight = newHeight;
-				}
-			};
-			addResizeListener(this.wrap[0], this._wrapResizeListener);
+			this.lastEditorPercentWidth = 0.5;
+			this.lastEditorPercentHeight = editorHeight / (editorHeight + previewHeight);
+			addResizeListener(this.wrap[0], $.proxy(this.wrapResizeListener, this));
 			
 			// Now that all measures were made, we can close the preview if needed:
 			if (!_options.openPreview) {
@@ -581,7 +588,12 @@
 				previewWrapWidth = show ? 0 : this.previewWrap.width(),
 				sidebysideStep = function (now /*, fx */) {
 					self.previewWrap[0].style.maxWidth = now + "px";
-					self.editorWrap.width(editorWrapWidth + (previewWrapWidth - now));
+					var newEditorWrapWidth = editorWrapWidth + (previewWrapWidth - now);
+					self.editorWrap.width(newEditorWrapWidth);
+					self.editorWrap[0].style.maxWidth = newEditorWrapWidth + "px";
+				},
+				unsetPreviewWrapDisplay = function() {
+					self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
 				};
 			
 			if (show) {
@@ -595,13 +607,12 @@
 					}, {
 						duration: duration,
 						step: sidebysideStep,
-						start: function() {
-							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
+						start: function(fx) {
+							var sizes = splitSize(self.wrap.width(), self.lastEditorPercentWidth, 60);
+							fx.tweens[0].end = sizes.lastSize;
+							unsetPreviewWrapDisplay();	// Why jQuery sets this to "block" ?
 						},
-						complete: function() {
-							self.previewWrap.css("max-width", "");
-							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
-						}
+						complete: unsetPreviewWrapDisplay	// Why jQuery sets this to "block" ?
 					});
 				} else {
 					var previewWrapHeightUsed = this.previewWrap.outerHeight() + previewWrapMargin;
@@ -612,12 +623,8 @@
 					this.previewWrap.stop().slideDown({
 						duration: duration,
 						progress: progress,
-						start: function() {
-							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
-						},
-						complete: function() {
-							self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
-						}
+						start: unsetPreviewWrapDisplay,	// Why jQuery sets this to "block" ?
+						complete: unsetPreviewWrapDisplay	// Why jQuery sets this to "block" ?
 					});
 				}
 			} else {
@@ -686,13 +693,14 @@
 					this.adjustHeights(data.originalWrapHeight);
 					this.lastWrapHeight = data.originalWrapHeight;
 				} else {
-					var heights = computeHeights(data.availableHeight, this.lastEditorPercentHeight);
-					this.editor.height(heights.editorHeight);
-					this.preview.height(heights.previewHeight);
+					var sizes = splitSize(data.availableHeight, this.lastEditorPercentHeight, 15);
+					this.editor.height(sizes.firstSize);
+					this.preview.height(sizes.lastSize);
 				}
 				this._checkHeightsManaged("fullscreen", false);
 				this.wrap[0].style.height = data.originalWrapStyleHeight;
 			}
+			this.wrapResizeListener();
 			
 			return this;	// Chaining
 		},
@@ -709,6 +717,7 @@
 				originalBottommarginTop = this.bottommargin.offset().top;
 			if (sidebyside) {
 				this.wrap.addClass("sidebyside");
+				this.adjustWidths(this.wrap.width());
 				if (!isPreviewVisible) {
 					this.togglePreview(true, 0, false, true);
 				}
@@ -732,6 +741,8 @@
 				var originalWrapHeight = this.wrap.height();
 				this.editorWrap.css("width", "");
 				this._checkHeightsManaged("sidebyside", false);
+				this.editorWrap.css({width: "", maxWidth: ""});
+				this.previewWrap.css({width: "", maxWidth: ""});
 				this.wrap.removeClass("sidebyside");
 				
 				var deltaBottommarginTop = this.bottommargin.offset().top - originalBottommarginTop;
@@ -748,13 +759,13 @@
 		isPreviewCollapses: function() {
 			return this._previewCollapses;
 		},
-		toggltPreviewCollapses: function(previewCollapses, force) {
+		togglePreviewCollapses: function(previewCollapses, force) {
 			previewCollapses = checkToggleState(previewCollapses, this._previewCollapses, force);
 			if (previewCollapses === undefined) {
 				return this;	// Chaining
 			}
 			
-			this._previewCollapsesNot = previewCollapses;
+			this._previewCollapses = previewCollapses;
 			this._checkHeightsManaged();
 			
 			return this;	// Chaining
@@ -786,31 +797,62 @@
 				this._toggleHeightsManaged(manage, force);
 			}
 		},
+		wrapResizeListener: function() {
+			var newWidth = this.wrap.width(),
+				newHeight = this.wrap.height();
+			if (newWidth !== this.lastWrapWidth) {
+				this.adjustWidths(newWidth);
+				this.lastWrapWidth = newWidth;
+			}
+			if (newHeight !== this.lastWrapHeight) {
+				if (this._heightsManaged) {
+					this.adjustHeights(newHeight);
+				} else {
+					var editorHeight = this.editor.height();
+					this.lastEditorPercentHeight = editorHeight / (editorHeight + this.preview.height());
+				}
+				this.lastWrapHeight = newHeight;
+			}
+		},
 		// When the wrap height changes, this will resize the editor and the preview,
 		// keeping the height ratio between them.
 		adjustHeights: function(wrapHeight) {
 			// To avoid document reflow, we only set the values at the end.
-			var heights;
+			var sizes;
 			if (this.isSidebyside()) {
 				var deltaHeight = wrapHeight - this.lastWrapHeight;
-				heights = {
-					editorHeight: this.editor.height() + deltaHeight,
-					previewHeight: this.preview.height() + deltaHeight
+				sizes = {
+					firstSize: this.editor.height() + deltaHeight,
+					lastSize: this.preview.height() + deltaHeight
 				};
 			} else {
 				var isPreviewVisible = this.isPreviewVisible(),
 					editorHeight = this.editor.height(),
 					previewHeight = isPreviewVisible ? this.preview.height() : 0,
 					availableHeight = editorHeight + previewHeight + (wrapHeight - this.lastWrapHeight);
-				heights = computeHeights(availableHeight, this.lastEditorPercentHeight);
+				sizes = splitSize(availableHeight, this.lastEditorPercentHeight, 15);
 				if (!isPreviewVisible) {
 					// Keep the previewHeight for when the preview will slide down again.
 					// But allow editorHeight to take the whole available height:
-					heights.editorHeight = editorHeight + (wrapHeight - this.lastWrapHeight);
+					sizes.firstSize = editorHeight + (wrapHeight - this.lastWrapHeight);
 				}
 			}
-			this.editor.height(heights.editorHeight);
-			this.preview.height(heights.previewHeight);
+			this.editor.height(sizes.firstSize);
+			this.preview.height(sizes.lastSize);
+			
+			return this;	// Chaining
+		},
+		adjustWidths: function(wrapWidth) {
+			if (this.isSidebyside()) {
+				var sizes = splitSize(wrapWidth, this.lastEditorPercentWidth, 60);
+				if (!this.isPreviewVisible()) {
+					sizes.firstSize += sizes.lastSize;
+				}
+				this.editorWrap.width(sizes.firstSize);
+				this.previewWrap.width(sizes.lastSize);
+				this.editorWrap[0].style.maxWidth = sizes.firstSize + "px";
+				this.previewWrap[0].style.maxWidth = sizes.lastSize + "px";
+			}
 			
 			return this;	// Chaining
 		}
