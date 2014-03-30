@@ -303,7 +303,7 @@
 				span = $('<span />').appendTo(control);
 			if ($.type(controlName) === "string") {
 				if (controlName === "|") {	// Separator
-					controlList.append(control.addClass(plgName + '_controlsep'));
+					controlList.append(control.addClass(plgName + '_controlsep ' + plgName + '_controlbutton'));
 					continue;
 				}
 				var def = $.meltdown.controlDefs[controlName];
@@ -311,12 +311,12 @@
 					debug("Control not found: " + controlName);
 					continue;
 				}
-				control.addClass(plgName + "_control-" + controlName + " " + plgName + '_control ' + (def.styleClass || ""));
+				control.addClass(plgName + "_control-" + controlName + " " + plgName + '_control ' + plgName + '_controlbutton ' + (def.styleClass || ""));
 				span.text(def.label).attr("title", def.altText);
 				addControlEventHandler(meltdown, def, control);
 				
 			} else if ($.isArray(controlName)) {
-				control.addClass(plgName + "_controlgroup-" + controlName.name + " " + plgName + '_controlgroup');
+				control.addClass(plgName + "_controlgroup-" + controlName.name + " " + plgName + '_controlgroup ' + plgName + '_controlbutton');
 				span.text(controlName.label).append('<i class="meltdown-icon-caret-down" />');
 				addGroupClickHandler(control);
 				control.append(buildControls(meltdown, controlName, true));

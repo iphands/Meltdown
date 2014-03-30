@@ -211,18 +211,14 @@ ul.meltdown_controls {
 	padding: 0 !important;
 	list-style: none;
 }
-li.meltdown_control,
-li.meltdown_controlgroup,
-li.meltdown_controlsep {
+li.meltdown_controlbutton {
 	position: relative;
 	float: left;
 	margin: 0 0 0 5px;
 	padding: 0;
 }
 .meltdown_controls li.meltdown_control-preview { float: right; margin-right: 5px; }
-li.meltdown_control span,
-li.meltdown_controlgroup > span,
-li.meltdown_controlsep span {
+li.meltdown_controlbutton > span {
 	float: left;
 	padding: 6px;
 	line-height: 1em;
@@ -236,7 +232,7 @@ li.meltdown_controlsep span {
 	font-size: 12px;
 	cursor: pointer;
 }
-.meltdown_controls li.meltdown_controlsep span {
+.meltdown_controls li.meltdown_controlsep > span {
 	min-width: 1px;
 	width: 1px;
 	background-color: #ccc;
@@ -244,42 +240,42 @@ li.meltdown_controlsep span {
 	padding-left: 0;
 	cursor: auto;
 }
-li.meltdown_control:hover span,
-li.meltdown_control:focus span {
+li.meltdown_controlbutton:hover > span,
+li.meltdown_controlbutton:focus > span {
 	color: #06c;
 }
-.meltdown_controls li.meltdown_control-bold span,
-.meltdown_controls li.meltdown_control-italics span,
-.meltdown_controls li.meltdown_control-ul span,
-.meltdown_controls li.meltdown_control-ol span,
-.meltdown_controls li.meltdown_control-hr span,
-.meltdown_controls li.meltdown_control-table span,
-.meltdown_controls li.meltdown_control-preview span,
-.meltdown_controls li.meltdown_control-link span,
-.meltdown_controls li.meltdown_control-img span,
-.meltdown_controls li.meltdown_control-blockquote span,
-.meltdown_controls li.meltdown_control-codeblock span,
-.meltdown_controls li.meltdown_control-code span,
-.meltdown_controls li.meltdown_control-footnote span,
+.meltdown_controls li.meltdown_control-bold > span,
+.meltdown_controls li.meltdown_control-italics > span,
+.meltdown_controls li.meltdown_control-ul > span,
+.meltdown_controls li.meltdown_control-ol > span,
+.meltdown_controls li.meltdown_control-hr > span,
+.meltdown_controls li.meltdown_control-table > span,
+.meltdown_controls li.meltdown_control-preview > span,
+.meltdown_controls li.meltdown_control-link > span,
+.meltdown_controls li.meltdown_control-img > span,
+.meltdown_controls li.meltdown_control-blockquote > span,
+.meltdown_controls li.meltdown_control-codeblock > span,
+.meltdown_controls li.meltdown_control-code > span,
+.meltdown_controls li.meltdown_control-footnote > span,
 .meltdown_controls li.meltdown_controlgroup-kitchenSink > span {
 	height: 12px;
 	position: relative;
 	text-indent: -9000em;
 	width: 12px;
 }
-.meltdown_controls li.meltdown_control-bold span:before,
-.meltdown_controls li.meltdown_control-italics span:before,
-.meltdown_controls li.meltdown_control-ul span:before,
-.meltdown_controls li.meltdown_control-ol span:before,
-.meltdown_controls li.meltdown_control-hr span:before,
-.meltdown_controls li.meltdown_control-table span:before,
-.meltdown_controls li.meltdown_control-preview span:before,
-.meltdown_controls li.meltdown_control-link span:before,
-.meltdown_controls li.meltdown_control-img span:before,
-.meltdown_controls li.meltdown_control-blockquote span:before,
-.meltdown_controls li.meltdown_control-codeblock span:before,
-.meltdown_controls li.meltdown_control-code span:before,
-.meltdown_controls li.meltdown_control-footnote span:before,
+.meltdown_controls li.meltdown_control-bold > span:before,
+.meltdown_controls li.meltdown_control-italics > span:before,
+.meltdown_controls li.meltdown_control-ul > span:before,
+.meltdown_controls li.meltdown_control-ol > span:before,
+.meltdown_controls li.meltdown_control-hr > span:before,
+.meltdown_controls li.meltdown_control-table > span:before,
+.meltdown_controls li.meltdown_control-preview > span:before,
+.meltdown_controls li.meltdown_control-link > span:before,
+.meltdown_controls li.meltdown_control-img > span:before,
+.meltdown_controls li.meltdown_control-blockquote > span:before,
+.meltdown_controls li.meltdown_control-codeblock > span:before,
+.meltdown_controls li.meltdown_control-code > span:before,
+.meltdown_controls li.meltdown_control-footnote > span:before,
 .meltdown_controls li.meltdown_controlgroup-kitchenSink > span:before {
 	position: absolute;
 		left: 4px;
@@ -294,57 +290,57 @@ li.meltdown_control:focus span {
 	text-indent: 0;
 }
 /* Resize and reposition Bold */
-.meltdown_controls li.meltdown_control-bold span:before {
+.meltdown_controls li.meltdown_control-bold > span:before {
 	content: "\62";
 	font-size: 12px;
 	left: 7px;
 	top: 7px;
 }
 /* Resize and reposition Italics */
-.meltdown_controls li.meltdown_control-italics span:before {
+.meltdown_controls li.meltdown_control-italics > span:before {
 	content: "\69";
 	font-size: 12px;
 	left: 8px;
 	top: 7px;
 }
-.meltdown_controls li.meltdown_control-ul span:before {
+.meltdown_controls li.meltdown_control-ul > span:before {
 	content: "\2a";
 }
-.meltdown_controls li.meltdown_control-ol span:before {
+.meltdown_controls li.meltdown_control-ol > span:before {
 	content: "\31";
 }
-.meltdown_controls li.meltdown_control-table span:before {
+.meltdown_controls li.meltdown_control-table > span:before {
 	content: "\74";
 }
-.meltdown_controls li.meltdown_control-preview span:before {
+.meltdown_controls li.meltdown_control-preview > span:before {
 	content: "\73";
 }
-.meltdown_wrap.openpreview .meltdown_controls li.meltdown_control-preview span:before {
+.meltdown_wrap.openpreview .meltdown_controls li.meltdown_control-preview > span:before {
 	content: "\68"; /* Toggle to Closed Eye */
 	color: #06c;
 }
 .meltdown_controls li.meltdown_controlgroup-kitchenSink > span:before {
 	content: "\2b";
 }
-.meltdown_controls li.meltdown_control-link span:before {
+.meltdown_controls li.meltdown_control-link > span:before {
 	content: "\6c";
 }
-.meltdown_controls li.meltdown_control-img span:before {
+.meltdown_controls li.meltdown_control-img > span:before {
 	content: "\70";
 }
-.meltdown_controls li.meltdown_control-blockquote span:before {
+.meltdown_controls li.meltdown_control-blockquote > span:before {
 	content: "\22";
 }
-.meltdown_controls li.meltdown_control-codeblock span:before {
+.meltdown_controls li.meltdown_control-codeblock > span:before {
 	content: "\5b";
 }
-.meltdown_controls li.meltdown_control-code span:before {
+.meltdown_controls li.meltdown_control-code > span:before {
 	content: "\3c";
 }
-.meltdown_controls li.meltdown_control-footnote span:before {
+.meltdown_controls li.meltdown_control-footnote > span:before {
 	content: "\66";
 }
-.meltdown_controls li.meltdown_control-hr span:before {
+.meltdown_controls li.meltdown_control-hr > span:before {
 	content: "\5f";
 }
 
@@ -368,12 +364,12 @@ li.meltdown_controlgroup ul {
 	-webkit-border-radius: 3px;
 	border-radius: 3px;
 }
-	.meltdown_controls li.meltdown_controlgroup-kitchenSink > ul {
-		width: 120px;
-	}
-	li.meltdown_controlgroup-open > span {
-		color: #06c;
-	}
+.meltdown_controls li.meltdown_controlgroup-kitchenSink > ul {
+	width: 120px;
+}
+li.meltdown_controlgroup-open > span {
+	color: #06c;
+}
 .meltdown_controls li.meltdown_controlgroup i.meltdown-icon-caret-down {
 	
 }
@@ -384,18 +380,14 @@ li.meltdown_controlgroup li {
 .meltdown_controls li.meltdown_controlgroup-kitchenSink li { float: left; margin-left: 5px; }
 li.meltdown_controlgroup li span { display: block; float: none; }
 
-.meltdown_control.disabled span,
-.meltdown_controlgroup.disabled sapn,
-.meltdown_controlsep.disabled span,
-li.meltdown_control.disabled:hover span,
-li.meltdown_control.disabled:focus span {
+.meltdown_controlbutton.disabled > span,
+li.meltdown_controlbutton.disabled:hover > span,
+li.meltdown_controlbutton.disabled:focus > span {
 	color: grey;
 	cursor: not-allowed;
 }
 
-.meltdown_control.overflowedControl,
-.meltdown_controlgroup.overflowedControl,
-.meltdown_controlsep.overflowedControl {
+.meltdown_controlbutton.overflowedControl {
 	display: none;
 }
 
