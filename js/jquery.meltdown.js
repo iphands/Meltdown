@@ -126,8 +126,6 @@
 			},
 			link: {
 				label: "Link",
-				group: "kitchenSink",
-				groupLabel: "Kitchen Sink",
 				altText: "Link",
 				before: "[",
 				placeholder: "Example link",
@@ -135,8 +133,6 @@
 			},
 			img: {
 				label: "Image",
-				group: "kitchenSink",
-				groupLabel: "Kitchen Sink",
 				altText: "Image",
 				before: "![Alt text](",
 				placeholder: "http://",
@@ -144,8 +140,6 @@
 			},
 			blockquote: {
 				label: "Blockquote",
-				group: "kitchenSink",
-				groupLabel: "Kitchen Sink",
 				altText: "Blockquote",
 				preselectLine: true,
 				before: "> ",
@@ -154,8 +148,6 @@
 			},
 			codeblock: {
 				label: "Code Block",
-				group: "kitchenSink",
-				groupLabel: "Kitchen Sink",
 				altText: "Code Block",
 				preselectLine: true,
 				before: "~~~\n",
@@ -165,8 +157,6 @@
 			},
 			code: {
 				label: "Code",
-				group: "kitchenSink",
-				groupLabel: "Kitchen Sink",
 				altText: "Inline Code",
 				before: "`",
 				placeholder: "code",
@@ -174,8 +164,6 @@
 			},
 			footnote: {
 				label: "Footnote",
-				group: "kitchenSink",
-				groupLabel: "Kitchen Sink",
 				altText: "Footnote",
 				before: "[^1]\n\n[^1]:",
 				placeholder: "Example footnote",
@@ -183,8 +171,6 @@
 			},
 			hr: {
 				label: "HR",
-				group: "kitchenSink",
-				groupLabel: "Kitchen Sink",
 				altText: "Horizontal Rule",
 				before: "----------",
 				placeholder: "",
@@ -586,8 +572,7 @@
 			// Function to resize the editor when the preview is resized:
 			var self = this,
 				editorHeight = this.editor.height(),
-				previewWrapMargin = parseFloat(this.previewWrap.css("marginBottom")),
-				previewWrapHeightStart = show ? -previewWrapMargin : this.previewWrap.outerHeight(),
+				previewWrapHeightStart = show ? 0 : this.previewWrap.outerHeight(),
 				availableHeight = editorHeight + previewWrapHeightStart,
 				progress = this._isHeightsManaged() ? function(/* animation, progress */) {
 					self.editor.height(availableHeight - self.previewWrap.outerHeight());
@@ -623,7 +608,7 @@
 						complete: unsetPreviewWrapDisplay	// Why jQuery sets this to "block" ?
 					});
 				} else {
-					var previewWrapHeightUsed = this.previewWrap.outerHeight() + previewWrapMargin;
+					var previewWrapHeightUsed = this.previewWrap.outerHeight();
 					// Check that preview is not too big:
 					if (this._heightsManaged && previewWrapHeightUsed > editorHeight - 15) {
 						this.preview.height("-=" + (previewWrapHeightUsed - (editorHeight - 15)));
@@ -658,17 +643,12 @@
 					if (!isOldjQuery && this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
 						this.previewWrap.stop().slideUp({
 							duration: duration,
-							progress: progress,	// jQuery 1.8+
-							complete: function() {
-								if (self._heightsManaged) {
-									self.editor.height("+=" + previewWrapMargin);
-								}
-							}
+							progress: progress	// jQuery 1.8+
 						});
 					} else {
 						this.previewWrap.stop().hide();
 						if (this._heightsManaged) {
-							this.editor.height(availableHeight + previewWrapMargin);
+							this.editor.height(availableHeight);
 						}
 					}
 				}
@@ -789,18 +769,18 @@
 		_isHeightsManaged: function() {
 			return this._heightsManaged;
 		},
-		_toggleHeightsManaged: function(managed, force) {
-			managed = checkToggleState(managed, this._heightsManaged, force);
-			if (managed === undefined) {
+		_toggleHeightsManaged: function(manage, force) {
+			manage = checkToggleState(manage, this._heightsManaged, force);
+			if (manage === undefined) {
 				return this;	// Chaining
 			}
 			
-			if (managed) {
+			if (manage) {
 				this.wrap.height("+=0").addClass("heightsManaged");
 			} else {
 				this.wrap.height("auto").removeClass("heightsManaged");
 			}
-			this._heightsManaged = managed;
+			this._heightsManaged = manage;
 			
 			return this;	// Chaining
 		},
@@ -947,7 +927,7 @@
 		$.meltdown.controlDefs.sidebyside.styleClass = "disabled";
 		$.meltdown.controlDefs.sidebyside.altText = "Disabled: requires jQuery 1.8+";
 		Meltdown.prototype.toggleSidebyside = function() {
-			console.log("Requires jQuery 1.8+");
+			debug("Requires jQuery 1.8+");
 			return this;
 		};
 	}
