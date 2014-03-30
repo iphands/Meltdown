@@ -12,6 +12,7 @@
 	var ver = '0.1',
 		plgName = 'meltdown',
 		dbg = true,
+		isOldjQuery = parseFloat($.fn.jquery) < 1.8,
 		body = $("body"),
 		doc = $(document);
 	
@@ -480,7 +481,8 @@
 			this.bottommargin = $('<div class="' + plgName + '_bottommargin"/>').appendTo(this.wrap);
 			
 			// Setup meltdown sizes:
-			this.wrap.outerWidth(this.editorPreInitOuterWidth);
+			this.wrap.outerWidth(this.editorPreInitOuterWidth);	// jQuery 1.8+ (undocumented: http://bugs.jquery.com/ticket/10877)
+			if (isOldjQuery) this.wrap.width(this.editorPreInitOuterWidth);	// Good enough.
 			var previewHeight = _options.previewHeight;
 			if (previewHeight === "editorHeight") {
 				previewHeight = this.editor.height();
@@ -517,7 +519,7 @@
 			this._checkToolbarOverflowedControls();
 			
 			// Setup display state (preview open and _heightsManaged):
-			this._previewCollapses = _options._previewCollapses;
+			this._previewCollapses = _options.previewCollapses;
 			this.togglePreview(true, 0, true, !_options.openPreview);	// Do not update the preview if !_options.openPreview
 			if (!this.isPreviewCollapses() && _options.previewHeight === "auto") {
 				this.preview.height("+=0");	// If !_previewCollapses, we cannot have a dynamic height.
@@ -599,7 +601,7 @@
 					self.editorWrap[0].style.maxWidth = newEditorWrapWidth + "px";
 				},
 				unsetPreviewWrapDisplay = function() {
-					self.previewWrap.css("display", "");	// Why jQuery sets this to "block" ?
+					self.previewWrap.css("display", "");
 				};
 			
 			if (show) {
@@ -613,7 +615,7 @@
 					}, {
 						duration: duration,
 						step: sidebysideStep,
-						start: function(fx) {
+						start: function(fx) {	// jQuery 1.8+
 							var sizes = splitSize(self.wrap.width(), self.lastEditorPercentWidth, 60);
 							fx.tweens[0].end = sizes.lastSize;
 							unsetPreviewWrapDisplay();	// Why jQuery sets this to "block" ?
@@ -626,12 +628,20 @@
 					if (this._heightsManaged && previewWrapHeightUsed > editorHeight - 15) {
 						this.preview.height("-=" + (previewWrapHeightUsed - (editorHeight - 15)));
 					}
-					this.previewWrap.stop().slideDown({
-						duration: duration,
-						progress: progress,
-						start: unsetPreviewWrapDisplay,	// Why jQuery sets this to "block" ?
-						complete: unsetPreviewWrapDisplay	// Why jQuery sets this to "block" ?
-					});
+					if (!isOldjQuery) {
+						this.previewWrap.stop().slideDown({
+							duration: duration,
+							progress: progress,	// jQuery 1.8+
+							start: unsetPreviewWrapDisplay,	// Why jQuery sets this to "block" ?	// jQuery 1.8+
+							complete: unsetPreviewWrapDisplay	// Why jQuery sets this to "block" ?
+						});
+					} else {
+						if (this._heightsManaged) {
+							this.editor.height("-=" + previewWrapHeightUsed);
+						}
+						this.previewWrap.stop().show();
+						unsetPreviewWrapDisplay();	// Why jQuery sets this to "block" ?
+					}
 				}
 			} else {
 				if (this.isSidebyside()) {
@@ -645,10 +655,10 @@
 						}
 					});
 				} else {
-					if (this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
+					if (!isOldjQuery && this.previewWrap.is(":visible") && duration > 0) {	// slideUp() doesn't work on hidden elements.
 						this.previewWrap.stop().slideUp({
 							duration: duration,
-							progress: progress,
+							progress: progress,	// jQuery 1.8+
 							complete: function() {
 								if (self._heightsManaged) {
 									self.editor.height("+=" + previewWrapMargin);
@@ -932,5 +942,14 @@
 		
 		return this;	// Chaining
 	};
+	
+	if (isOldjQuery) {
+		$.meltdown.controlDefs.sidebyside.styleClass = "disabled";
+		$.meltdown.controlDefs.sidebyside.altText = "Disabled: requires jQuery 1.8+";
+		Meltdown.prototype.toggleSidebyside = function() {
+			console.log("Requires jQuery 1.8+");
+			return this;
+		};
+	}
 	
 }(jQuery, window, document));

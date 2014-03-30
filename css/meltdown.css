@@ -384,6 +384,15 @@ li.meltdown_controlgroup li {
 .meltdown_controls li.meltdown_controlgroup-kitchenSink li { float: left; margin-left: 5px; }
 li.meltdown_controlgroup li span { display: block; float: none; }
 
+.meltdown_control.disabled span,
+.meltdown_controlgroup.disabled sapn,
+.meltdown_controlsep.disabled span,
+li.meltdown_control.disabled:hover span,
+li.meltdown_control.disabled:focus span {
+	color: grey;
+	cursor: not-allowed;
+}
+
 .meltdown_control.overflowedControl,
 .meltdown_controlgroup.overflowedControl,
 .meltdown_controlsep.overflowedControl {
