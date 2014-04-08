@@ -293,7 +293,7 @@
 		var controlList = $('<ul />');
 		if (subGroup) {
 			controlList.css("display", "none");
-			controlList.addClass(plgName + "_controlgroup-" + controlsGroup.plgName + " " + plgName + '_controlgroup-dropdown');
+			controlList.addClass(plgName + "_controlgroup-" + controlsGroup.name + " " + plgName + '_controlgroup-dropdown');
 		} else {
 			controlList.addClass("meltdown_controls");
 		}
