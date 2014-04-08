@@ -64,8 +64,8 @@
 				"sidebyside"
 			]),
 			
-			// If true, editor and preview will be displayed side by side instead of one on the other.
-			sidebyside: false,
+			// If true, goes directly in fullscreen mode:
+			fullscreen: false,
 			
 			// Should the preview be visible by default ?
 			openPreview: false,
@@ -77,6 +77,9 @@
 			// Set this to false if you want the editor to expand/shrinkin the opposite way of the preview.
 			// Setting this to false can be useful if you want to restrict or lock the total height.
 			previewCollapses: true,
+			
+			// If true, editor and preview will be displayed side by side instead of one on the other.
+			sidebyside: false,
 			
 			// If true, when the preview is fully scrolled it will stay scrolled while typing.
 			// Very convenient when typing/adding text at the end of the editor.
@@ -452,6 +455,11 @@
 			var self = this,
 				_options = this._options = $.extend({}, $.meltdown.defaults, userOptions);
 			
+			// If parser is false, use a HTML parser (ie. directly use the text as the HTML source)
+			this.parser = _options.parser || function(text) {
+				return text;
+			};
+			
 			this.editorPreInitOuterWidth = this.element.outerWidth();
 			
 			// Setup everything detached from the document:
@@ -477,7 +485,7 @@
 			this.preview.height(previewHeight);
 			
 			// Build toolbar:
-			this.controls = buildControls(this, this._options.controls).appendTo(this.bar);
+			this.controls = buildControls(this, _options.controls).appendTo(this.bar);
 			addWarning(this, this.previewHeader.find(".meltdown_techpreview"));
 			
 			// editorDeco's CSS need a bit of help:
@@ -531,8 +539,11 @@
 			if (!_options.openPreview) {
 				this.togglePreview(false, 0);
 			}
-			// And set the sidebyside:
+			// And set the sidebyside and fullscreen modes:
 			this.toggleSidebyside(_options.sidebyside, true);
+			if (_options.fullscreen) {
+				this.toggleFullscreen(_options.fullscreen);
+			}
 			
 			return this;	// Chaining
 		},
@@ -550,7 +561,7 @@
 				// If the preview is scrolled to the bottom, keept it scrolled after update:
 				var previewNode = this.preview[0],
 					scrolledToBottom = previewNode.scrollHeight - previewNode.scrollTop === previewNode.clientHeight;
-				this.preview.html(this._options.parser(text));
+				this.preview.html(this.parser(text));
 				if (scrolledToBottom) {
 					previewNode.scrollTop = previewNode.scrollHeight;
 				}
@@ -932,10 +943,8 @@
 		buildControls = function() {
 			var ret = oldBuildControls.apply(this, arguments);
 			ret.find("span").attr("unselectable", "on");
-			console.log(ret);
 			return ret;
 		};
-		console.log(buildControls);
 	}
 	
 	if (isOldjQuery) {
