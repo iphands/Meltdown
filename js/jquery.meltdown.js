@@ -1,4 +1,4 @@
-/*global jQuery, console, Markdown, addResizeListener*/
+/*global jQuery, addResizeListener*/
 
 /*
  * Meltdown (Markup Extra Live Toolbox)
@@ -19,7 +19,7 @@
 	
 	function debug(msg) {
 		if (window.console && dbg) {
-			console.log(msg);
+			window.console.log(msg);
 		}
 	}
 	
@@ -89,7 +89,8 @@
 			previewDuration: 400,
 			
 			// The parser. The function takes a string and returns an html formatted string.
-			parser: Markdown
+			// Set this to false to use an _identity_ function (for a direct HTML "parser").
+			parser: window.Markdown
 		},
 		
 		// Definitions for the toolbar controls:
@@ -451,9 +452,11 @@
 	// The Meltdown methods.
 	// Methods are publicly available: elem.meltdown("methodName", args...)
 	$.meltdown.methods = $.extend(Meltdown.prototype, {
-		init: function(userOptions) {
+		_init: function(userOptions) {
 			var self = this,
 				_options = this._options = $.extend({}, $.meltdown.defaults, userOptions);
+			
+			this._lastUpdateText = "";
 			
 			// If parser is false, use a HTML parser (ie. directly use the text as the HTML source)
 			this.parser = _options.parser || function(text) {
@@ -463,7 +466,7 @@
 			this.editorPreInitOuterWidth = this.element.outerWidth();
 			
 			// Setup everything detached from the document:
-			this.wrap = $('<div class="' + plgName + '_wrap openpreview" />');
+			this.wrap = $('<div class="' + plgName + '_wrap previewopen" />');
 			this.topmargin = $('<div class="' + plgName + '_topmargin"/>').appendTo(this.wrap);
 			this.bar =  $('<div class="meltdown_bar"></div>').appendTo(this.wrap);
 			this.editorWrap =  $('<div class="' + plgName + '_editor-wrap" />').appendTo(this.wrap);
@@ -556,8 +559,10 @@
 			}
 		},
 		update: function(force) {
-			var text = this.editor.val();
-			if (force === true || (this.isPreviewVisible() && text !== this.lastText)) {
+			return this.updateWith(this.editor.val(), force);
+		},
+		updateWith: function(text, force) {
+			if (force === true || (this.isPreviewOpen() && text !== this._lastUpdateText)) {
 				// If the preview is scrolled to the bottom, keept it scrolled after update:
 				var previewNode = this.preview[0],
 					scrolledToBottom = previewNode.scrollHeight - previewNode.scrollTop === previewNode.clientHeight;
@@ -565,16 +570,16 @@
 				if (scrolledToBottom) {
 					previewNode.scrollTop = previewNode.scrollHeight;
 				}
-				this.lastText = text;
+				this._lastUpdateText = text;
 			}
 			return this;	// Chaining
 		},
-		isPreviewVisible: function() {
-			return this.wrap.hasClass("openpreview");
+		isPreviewOpen: function() {
+			return this.wrap.hasClass("previewopen");
 		},
-		togglePreview: function(show, duration, force, noUpdate) {
-			show = checkToggleState(show, this.isPreviewVisible(), force);
-			if (show === undefined) {
+		togglePreview: function(open, duration, force, noUpdate) {
+			open = checkToggleState(open, this.isPreviewOpen(), force);
+			if (open === undefined) {
 				return this;	// Chaining
 			}
 			if (duration === undefined) {
@@ -584,13 +589,13 @@
 			// Function to resize the editor when the preview is resized:
 			var self = this,
 				editorHeight = this.editor.height(),
-				previewWrapHeightStart = show ? 0 : this.previewWrap.outerHeight(),
+				previewWrapHeightStart = open ? 0 : this.previewWrap.outerHeight(),
 				availableHeight = editorHeight + previewWrapHeightStart,
 				progress = this._isHeightsManaged() ? function(/* animation, progress */) {
 					self.editor.height(availableHeight - self.previewWrap.outerHeight());
 				} : $.noop,
 				editorWrapWidth = this.editorWrap.width(),
-				previewWrapWidth = show ? 0 : this.previewWrap.width(),
+				previewWrapWidth = open ? 0 : this.previewWrap.width(),
 				sidebysideStep = function (now /*, fx */) {
 					self.previewWrap[0].style.maxWidth = now + "px";
 					var newEditorWrapWidth = editorWrapWidth + (previewWrapWidth - now);
@@ -601,8 +606,8 @@
 					self.previewWrap.css("display", "");
 				};
 			
-			if (show) {
-				this.wrap.addClass("openpreview");
+			if (open) {
+				this.wrap.addClass("previewopen");
 				if (!noUpdate) {
 					this.update();
 				}
@@ -664,7 +669,7 @@
 						}
 					}
 				}
-				this.wrap.removeClass("openpreview");
+				this.wrap.removeClass("previewopen");
 			}
 			
 			return this;	// Chaining
@@ -721,18 +726,18 @@
 				return this;	// Chaining
 			}
 			
-			var isPreviewVisible = this.isPreviewVisible(),
+			var isPreviewOpen = this.isPreviewOpen(),
 				originalBottommarginTop = this.bottommargin.offset().top;
 			if (sidebyside) {
 				this.wrap.addClass("sidebyside");
 				this._adjustWidths(this.wrap.width());
-				if (!isPreviewVisible) {
+				if (!isPreviewOpen) {
 					this.togglePreview(true, 0, false, true);
 				}
 				var editorBottom = bottomPositionTest.appendTo(this.editorWrap).offset().top,
 					previewBottom = bottomPositionTest.appendTo(this.previewWrap).offset().top;
 				bottomPositionTest.detach();
-				if (!isPreviewVisible) {
+				if (!isPreviewOpen) {
 					this.togglePreview(false, 0, false, true);
 				}
 				var diffHeights = editorBottom - previewBottom;
@@ -743,7 +748,7 @@
 				this.preview.height("+=" + deltaWrapHeight);
 				this._checkHeightsManaged("sidebyside", true);
 			} else {
-				if (!isPreviewVisible) {
+				if (!isPreviewOpen) {
 					this.togglePreview(true, 0, false, true);
 				}
 				var originalWrapHeight = this.wrap.height();
@@ -757,7 +762,7 @@
 				this.lastWrapHeight = originalWrapHeight + deltaBottommarginTop;
 				this._adjustHeights(originalWrapHeight);
 				this.lastWrapHeight = originalWrapHeight;
-				if (!isPreviewVisible) {
+				if (!isPreviewOpen) {
 					this.togglePreview(false, 0, false, true);
 				}
 			}
@@ -835,12 +840,12 @@
 					lastSize: this.preview.height() + deltaHeight
 				};
 			} else {
-				var isPreviewVisible = this.isPreviewVisible(),
+				var isPreviewOpen = this.isPreviewOpen(),
 					editorHeight = this.editor.height(),
-					previewHeight = isPreviewVisible ? this.preview.height() : 0,
+					previewHeight = isPreviewOpen ? this.preview.height() : 0,
 					availableHeight = editorHeight + previewHeight + (wrapHeight - this.lastWrapHeight);
 				sizes = splitSize(availableHeight, this.lastEditorPercentHeight, 15);
-				if (!isPreviewVisible) {
+				if (!isPreviewOpen) {
 					// Keep the previewHeight for when the preview will slide down again.
 					// But allow editorHeight to take the whole available height:
 					sizes.firstSize = editorHeight + (wrapHeight - this.lastWrapHeight);
@@ -854,7 +859,7 @@
 		_adjustWidths: function(wrapWidth) {
 			if (this.isSidebyside()) {
 				var sizes = splitSize(wrapWidth, this.lastEditorPercentWidth, 60);
-				if (!this.isPreviewVisible()) {
+				if (!this.isPreviewOpen()) {
 					sizes.firstSize += sizes.lastSize;
 				}
 				this.editorWrap.width(sizes.firstSize);
@@ -908,18 +913,19 @@
 	});
 	
 	// THE $(...).meltdown() function:
+	// Inspired by: http://api.jqueryui.com/jQuery.widget/
 	$.fn.meltdown = function (arg) {
 		// Get method name and method arguments:
-		var methodName = $.type(arg) === "string" ? arg : "init",
-			args = Array.prototype.slice.call(arguments, methodName === "init" ? 0 : 1);
+		var methodName = $.type(arg) === "string" ? arg : "_init",
+			args = Array.prototype.slice.call(arguments, methodName === "_init" ? 0 : 1);
 		
 		// Dispatch method call:
 		for (var elem, meltdown, returnValue, i = 0; i < this.length; i++) {
 			elem = this[i];
 			// Get the Meltdown object or create it:
 			meltdown = $.data(elem, "Meltdown");
-			if (methodName === "init") {
-				if (meltdown) continue;	// Don't re-init it.
+			if (methodName === "_init") {
+				if (meltdown) continue;	// Don't re-create it.
 				meltdown = new Meltdown(elem);
 				$.data(elem, "Meltdown", meltdown);
 			}
