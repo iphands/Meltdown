@@ -12,6 +12,7 @@
 	var ver = '0.1',
 		plgName = 'meltdown',
 		dbg = true,
+		isIE8 = document.all && !document.addEventListener,	// From: http://tanalin.com/en/articles/ie-version-js/
 		isOldjQuery = parseFloat($.fn.jquery) < 1.8,
 		body = $("body"),
 		doc = $(document);
@@ -922,6 +923,20 @@
 		
 		return this;	// Chaining
 	};
+	
+	
+	if (isIE8||true) {
+		// Fixing the textarea deselection on click:
+		// (http://stackoverflow.com/questions/3558939/javascript-get-selected-text-from-textarea-in-ie8)
+		var oldBuildControls = buildControls;
+		buildControls = function() {
+			var ret = oldBuildControls.apply(this, arguments);
+			ret.find("span").attr("unselectable", "on");
+			console.log(ret);
+			return ret;
+		};
+		console.log(buildControls);
+	}
 	
 	if (isOldjQuery) {
 		$.meltdown.controlDefs.sidebyside.styleClass = "disabled";
