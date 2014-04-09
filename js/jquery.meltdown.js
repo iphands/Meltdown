@@ -9,13 +9,13 @@
 (function ($, window, document, undefined) {
 	'use strict';
 
-	var ver = '0.1',
+	var ver = '0.2',
 		plgName = 'meltdown',
 		dbg = true,
 		isIE8 = document.all && !document.addEventListener,	// From: http://tanalin.com/en/articles/ie-version-js/
 		isOldjQuery = parseFloat($.fn.jquery) < 1.8,
-		body = $("body"),
-		doc = $(document);
+		doc = $(document),
+		body = $("body");
 	
 	function debug(msg) {
 		if (window.console && dbg) {
@@ -34,6 +34,8 @@
 	};
 	
 	$.meltdown = {
+		version: ver,
+		
 		// Expose publicly:
 		controlsGroup: controlsGroup,
 		
