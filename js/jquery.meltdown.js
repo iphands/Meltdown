@@ -2,8 +2,8 @@
 
 /*
  * Meltdown (Markup Extra Live Toolbox)
- * Version: 0.1 (13-FEB-2013)
- * Requires: jQuery v1.7.2 or later
+ * Version: 0.2 (??-APR-2014)
+ * Requires: jQuery v1.7.2 or later (1.9.1 recommended)
  */
 
 (function ($, window, document, undefined) {
@@ -899,7 +899,7 @@
 					}
 					// Test if it would overflow:
 					control.removeClass("overflowedControl");
-					if(control.position().top > defaultTop) {
+					if (control.position().top > defaultTop) {
 						control.addClass("overflowedControl");
 						break;
 					}
