@@ -224,54 +224,50 @@
 	function addControlEventHandler(meltdown, def, control) {
 		var editor = meltdown.editor,
 			execAction = function () {
-				var text, selection, before, placeholder, after, lineStart, lineEnd, charBefore, charAfter;
-				before = def.before || "";
-				placeholder =  def.placeholder || "";
-				after = def.after || "";
-				if (editor.surroundSelectedText) {
-					text = editor.val();
-				
-					// Extend selection if needed:
-					selection = editor.getSelection();
-					if (def.preselectLine) {
-						lineStart = text.lastIndexOf('\n', selection.start) + 1;
+				var text = editor.val(),
+					selection = editor.getSelection(),
+					before = def.before || "",
+					placeholder =  def.placeholder || "",
+					after = def.after || "";
+			
+				// Extend selection if needed:
+				if (def.preselectLine) {
+					var lineStart = text.lastIndexOf('\n', selection.start) + 1,
 						lineEnd = text.indexOf('\n', selection.end);
-						if (lineEnd === -1) {
-							lineEnd = text.length;
-						}
-						editor.setSelection(lineStart, lineEnd);
-						selection = editor.getSelection();
+					
+					if (lineEnd === -1) {
+						lineEnd = text.length;
 					}
-				
-					// placeholder is only used if there is no selected text:
-					if (selection.length > 0) {
-						placeholder = selection.text;
-					}
-				
-					// isBlock means that there should be empty line before and after the selection:
-					if (def.isBlock) {
-						for (var i = 0; i < 2; i++) {
-							charBefore = text.charAt(selection.start - 1 - i);
-							charAfter = text.charAt(selection.end + i);
-							if (charBefore !== "\n" && charBefore !== "") {
-								before = "\n" + before;
-							}
-							if (charAfter !== "\n" && charAfter !== "") {
-								after = after + "\n";
-							}
-						}
-					}
-				
-					// Insert placeholder:
-					if (selection.text !== placeholder) {
-						editor.replaceSelectedText(placeholder, "select");
-					}
-					// Insert before and after selection:
-					editor.surroundSelectedText(before, after, "select");
-				} else {
-					debug('Failed to load surroundSelectedText');
-					editor.val(before + placeholder + after + "\n\n" + editor.val());
+					editor.setSelection(lineStart, lineEnd);
+					selection = editor.getSelection();
 				}
+			
+				// placeholder is only used if there is no selected text:
+				if (selection.length > 0) {
+					placeholder = selection.text;
+				}
+			
+				// isBlock means that there should be empty line before and after the selection:
+				if (def.isBlock) {
+					for (var i = 0; i < 2; i++) {
+						var charBefore = text.charAt(selection.start - 1 - i),
+							charAfter = text.charAt(selection.end + i);
+						
+						if (charBefore !== "\n" && charBefore !== "") {
+							before = "\n" + before;
+						}
+						if (charAfter !== "\n" && charAfter !== "") {
+							after = after + "\n";
+						}
+					}
+				}
+			
+				// Insert placeholder:
+				if (selection.text !== placeholder) {
+					editor.replaceSelectedText(placeholder, "select");
+				}
+				// Insert before and after selection:
+				editor.surroundSelectedText(before, after, "select");
 			};
 		
 		control.click(function (e) {
