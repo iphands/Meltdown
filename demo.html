@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Meltdown demo</title>
+<link rel="stylesheet" type="text/css" href="css/meltdown.css">
+<style type="text/css">
+/* Place both meltdowns at the top for easier testings (in a large enough window): */
+.meltdown_wrap { display: inline-block; vertical-align: top; }
+</style>
+</head>
+
+<body>
+
+<textarea id="meltdown1" class="meltdown" rows="7" cols="80">
+# Meltdown (Markdown Extra Live Toolbox)
+
+A jQuery plugin that adds Markdown Extra live previews, and a toolbar for common markdown actions.
+
+***
+
+1. **This** *is* [a](http:// "Link title") `demo`.
+
+</textarea>
+
+<textarea id="meltdown2" class="meltdown" rows="7" cols="50">
+Cooldown (Code Out Obsessively Loosely)
+=======================================
+
+A jQuery plugin that lets you code out unfastened, and a toolbar for common cooldown actions, eventually.
+</textarea>
+
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script src="js/lib/rangyinputs-jquery.min.js"></script>
+<script src="js/lib/element_resize_detection.js"></script>
+<script src="js/lib/js-markdown-extra.js"></script>
+<script src="js/jquery.meltdown.js"></script>
+<!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+	// Variables are exposed on the window object for easy testings in your console:
+	window.m1 = $('#meltdown1').meltdown({
+		openPreview: true,
+		previewHeight: "auto"
+	});
+	window.m2 = $('#meltdown2').meltdown({
+		previewCollapses: false
+	});
+	// And this for debugging:
+	window.mm1 = m1.data("Meltdown");
+	window.mm2 = m2.data("Meltdown");
+});
+</script>
+</body>
+</html>
