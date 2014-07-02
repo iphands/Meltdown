@@ -12,33 +12,46 @@
 	var ver = '0.2',
 		plgName = 'meltdown',
 		dbg = true,
-		isIE8 = document.all && !document.addEventListener,	// From: http://tanalin.com/en/articles/ie-version-js/
-		isOldjQuery = parseFloat($.fn.jquery) < 1.8,
+		isIE8 = document.all && !document.addEventListener,  // From: http://tanalin.com/en/articles/ie-version-js/
+		jqueryRequired = [1, 8, 0],
+		jqueryCurrent  = $.fn.jquery.split(' ')[0].split('.'), // first split to get rid of any amd related extras
+		isOldjQuery = false,
 		doc = $(document),
 		body = $("body");
-	
+
+	for (var i = 0; i < jqueryRequired.length; i++) {
+		var required = jqueryRequired[i],
+				current = parseInt(jqueryCurrent[i], 10);
+		if (required > current) {
+			isOldQuery = true;
+			break;
+		} else if (current > required) {
+			break;
+		}
+	}
+
 	function debug(msg) {
 		if (window.console && dbg) {
 			window.console.log(msg);
 		}
 	}
-	
+
 	// Used to test the bottom offset of elements:
 	var bottomPositionTest = $('<div style="bottom: 0;" />');
-	
+
 	// Helper for users that want to change the controls (For usage, see: $.meltdown.defaults.controls below)
 	var controlsGroup = function(name, label, controls) {
 		controls.name = name;
 		controls.label = label;
 		return controls;
 	};
-	
+
 	$.meltdown = {
 		version: ver,
-		
+
 		// Expose publicly:
 		controlsGroup: controlsGroup,
-		
+
 		// Default meltdown options:
 		defaults: {
 			// Use $.meltdown.controlsGroup() to make groups and subgroups of controls.
@@ -65,36 +78,36 @@
 				"fullscreen",
 				"sidebyside"
 			]),
-			
+
 			// If true, goes directly in fullscreen mode:
 			fullscreen: false,
-			
+
 			// Should the preview be visible by default ?
 			openPreview: false,
-			
+
 			// A CSS height or "editorHeight" or "auto" (to let the height adjust to the content).
 			previewHeight: "editorHeight",
-			
+
 			// If true, when the preview is toggled it will (un)collapse resulting in the total height of the wrap to change.
 			// Set this to false if you want the editor to expand/shrinkin the opposite way of the preview.
 			// Setting this to false can be useful if you want to restrict or lock the total height.
 			previewCollapses: true,
-			
+
 			// If true, editor and preview will be displayed side by side instead of one on the other.
 			sidebyside: false,
-			
+
 			// If true, when the preview is fully scrolled it will stay scrolled while typing.
 			// Very convenient when typing/adding text at the end of the editor.
 			autoScrollPreview: true,
-			
+
 			// Duration of the preview toggle animation:
 			previewDuration: 400,
-			
+
 			// The parser. The function takes a string and returns an html formatted string.
 			// Set this to false to use an _identity_ function (for a direct HTML "parser").
 			parser: window.Markdown
 		},
-		
+
 		// Definitions for the toolbar controls:
 		controlDefs: {
 			bold: {
@@ -206,7 +219,7 @@
 			}
 		}
 	};
-	
+
 	// Add h1...h6 control definitions to $.meltdown.controlDefs:
 	(function(controlDefs) {
 		for (var pounds = "", i = 1; i <= 6; i++) {
@@ -219,8 +232,8 @@
 			};
 		}
 	})($.meltdown.controlDefs);
-	
-	
+
+
 	function addControlEventHandler(meltdown, def, control) {
 		var editor = meltdown.editor,
 			execAction = function () {
@@ -229,30 +242,30 @@
 					before = def.before || "",
 					placeholder =  def.placeholder || "",
 					after = def.after || "";
-			
+
 				// Extend selection if needed:
 				if (def.preselectLine) {
 					var lineStart = text.lastIndexOf('\n', selection.start) + 1,
 						lineEnd = text.indexOf('\n', selection.end);
-					
+
 					if (lineEnd === -1) {
 						lineEnd = text.length;
 					}
 					editor.setSelection(lineStart, lineEnd);
 					selection = editor.getSelection();
 				}
-			
+
 				// placeholder is only used if there is no selected text:
 				if (selection.length > 0) {
 					placeholder = selection.text;
 				}
-			
+
 				// isBlock means that there should be empty line before and after the selection:
 				if (def.isBlock) {
 					for (var i = 0; i < 2; i++) {
 						var charBefore = text.charAt(selection.start - 1 - i),
 							charAfter = text.charAt(selection.end + i);
-						
+
 						if (charBefore !== "\n" && charBefore !== "") {
 							before = "\n" + before;
 						}
@@ -261,7 +274,7 @@
 						}
 					}
 				}
-			
+
 				// Insert placeholder:
 				if (selection.text !== placeholder) {
 					editor.replaceSelectedText(placeholder, "select");
@@ -269,7 +282,7 @@
 				// Insert before and after selection:
 				editor.surroundSelectedText(before, after, "select");
 			};
-		
+
 		control.click(function (e) {
 			if (!control.hasClass('disabled')) {
 				if (def.click) {
@@ -283,14 +296,14 @@
 			e.preventDefault();
 		});
 	}
-	
+
 	function addGroupClickHandler(control) {
 		control.on('click', function () {
 			control.siblings('li').removeClass(plgName + '_controlgroup-open').children('ul').hide();
 			control.toggleClass(plgName + '_controlgroup-open').children('ul').toggle();
 		});
 	}
-	
+
 	function buildControls(meltdown, controlsGroup, subGroup) {
 		var controlList = $('<ul />');
 		if (subGroup) {
@@ -299,7 +312,7 @@
 		} else {
 			controlList.addClass("meltdown_controls");
 		}
-		
+
 		for (var i = 0; i < controlsGroup.length; i++) {
 			var controlName = controlsGroup[i],
 				control = $('<li />'),
@@ -317,7 +330,7 @@
 				control.addClass(plgName + "_control-" + controlName + " " + plgName + '_control ' + plgName + '_controlbutton ' + (def.styleClass || ""));
 				span.text(def.label).attr("title", def.altText);
 				addControlEventHandler(meltdown, def, control);
-				
+
 			} else if ($.isArray(controlName)) {
 				control.addClass(plgName + "_controlgroup-" + controlName.name + " " + plgName + '_controlgroup ' + plgName + '_controlbutton');
 				span.text(controlName.label).append('<i class="meltdown-icon-caret-down" />');
@@ -326,10 +339,10 @@
 			}
 			controlList.append(control);
 		}
-		
+
 		return controlList;
 	}
-	
+
 	function addWarning(meltdown, element) {
 		element.click(function(e) {
 			var warning = $('<div class"' + plgName + '_warning"/>').html('<center><b>The preview area is a tech preview feature</b></center><br/>'
@@ -346,7 +359,7 @@
 			e.preventDefault();
 		});
 	}
-	
+
 	// Setup event handlers for the resize handle:
 	function setupResizeHandle(resizeHandle, firstElem, lastElem, vertical, meltdown) {
 		resizeHandle.addClass("meltdown_resizehandle-" + (vertical ? "vert" : "horiz"));
@@ -354,7 +367,7 @@
 			pageName = vertical ? "pageY" : "pageX",
 			lastEditorPercentName = vertical ? "lastEditorPercentHeight" : "lastEditorPercentWidth",
 			minSize = vertical ? 15 : 60;
-		
+
 		var startPos, minPos, maxPos, originalFirstElemSize, originalLastElemSize,
 			moveEventHandler = function(e) {
 				var delta = Math.min(Math.max(e[pageName] , minPos), maxPos) - startPos,
@@ -366,12 +379,12 @@
 					firstElem[0].style.maxWidth = firstElemSize + "px";
 					lastElem[0].style.maxWidth = lastElemSize + "px";
 				}
-				
+
 				var editorElem = vertical ? meltdown.editor[0] : meltdown.editorWrap[0],
 					editorSize = firstElem[0] === editorElem ? firstElemSize : lastElemSize;
 				meltdown[lastEditorPercentName] = editorSize / (firstElemSize + lastElemSize);
 			};
-		
+
 		// Init dragging handlers only on mousedown:
 		resizeHandle.on("mousedown", function(e) {
 			if (meltdown.isSidebyside() === vertical) {
@@ -382,14 +395,14 @@
 			// The first elem is assumed to be before resizeHandle, and the last is after:
 			firstElem = elems.first();
 			lastElem = elems.last();
-			
+
 			// Init dragging properties:
 			startPos = e[pageName];
 			originalFirstElemSize = firstElem[propName]();
 			originalLastElemSize = lastElem[propName]();
 			minPos = startPos - originalFirstElemSize + minSize;
 			maxPos = startPos + originalLastElemSize - minSize;
-			
+
 			// Setup event handlers:
 			doc.on("mousemove", moveEventHandler).one("mouseup", function() {
 				doc.off("mousemove", moveEventHandler);
@@ -400,7 +413,7 @@
 			body.addClass("unselectable");
 		});
 	}
-	
+
 	function debounce(func, wait, returnValue) {
 		var context, args, timeout,
 			exec = function() {
@@ -414,7 +427,7 @@
 			return returnValue;
 		};
 	}
-	
+
 	// Return true, false or undefined.
 	// If newState is undefined or not a boolean, return !state (this is the toggle action)
 	// If newState === state, return newState or if force, return undefined (to tell that no state change is required)
@@ -427,7 +440,7 @@
 		}
 		return newState;
 	}
-	
+
 	function splitSize(availableSize, firstPercentSize, minSize) {
 		var firstSize = Math.round(firstPercentSize * availableSize),
 			lastSize = availableSize - firstSize;
@@ -440,29 +453,29 @@
 		}
 		return {firstSize: firstSize, lastSize: lastSize};
 	}
-	
-	
+
+
 	// Meltdown base class:
 	var Meltdown = $.meltdown.Meltdown = function(elem) {
 			this.element = $(elem);
 		};
-	
+
 	// The Meltdown methods.
 	// Methods are publicly available: elem.meltdown("methodName", args...)
 	$.meltdown.methods = $.extend(Meltdown.prototype, {
 		_init: function(userOptions) {
 			var self = this,
 				_options = this._options = $.extend({}, $.meltdown.defaults, userOptions);
-			
+
 			this._lastUpdateText = "";
-			
+
 			// If parser is false, use a HTML parser (ie. directly use the text as the HTML source)
 			this.parser = _options.parser || function(text) {
 				return text;
 			};
-			
+
 			this.editorPreInitOuterWidth = this.element.outerWidth();
-			
+
 			// Setup everything detached from the document:
 			this.wrap = $('<div class="' + plgName + '_wrap previewopen" />');
 			this.topmargin = $('<div class="' + plgName + '_topmargin"/>').appendTo(this.wrap);
@@ -475,7 +488,7 @@
 			this.previewHeader =  $('<span class="' + plgName + '_preview-header">Preview Area (<a class="meltdown_techpreview" href="https://github.com/iphands/Meltdown/issues/1">Tech Preview</a>)</span>').appendTo(this.previewWrap);
 			this.preview =  $('<div class="' + plgName + '_preview" />').appendTo(this.previewWrap);
 			this.bottommargin = $('<div class="' + plgName + '_bottommargin"/>').appendTo(this.wrap);
-			
+
 			// Setup meltdown sizes:
 			this.wrap.outerWidth(this.editorPreInitOuterWidth);	// jQuery 1.8+ (undocumented: http://bugs.jquery.com/ticket/10877)
 			if (isOldjQuery) this.wrap.width(this.editorPreInitOuterWidth);	// Good enough.
@@ -484,36 +497,36 @@
 				previewHeight = this.editor.height();
 			}
 			this.preview.height(previewHeight);
-			
+
 			// Build toolbar:
 			this.controls = buildControls(this, _options.controls).appendTo(this.bar);
 			addWarning(this, this.previewHeader.find(".meltdown_techpreview"));
-			
+
 			// editorDeco's CSS need a bit of help:
 			this.editor.focus(function() {
 				self.editorDeco.addClass("focus");
 			}).blur(function() {
 				self.editorDeco.removeClass("focus");
 			});
-			
+
 			// Need to put a div in the wrap to allow absolute positioning for child elements.
 			// Bug in FF < 31: https://bugzilla.mozilla.org/show_bug.cgi?id=63895
 			this.previewWrap2 = $('<div class="' + plgName + '_preview-wrap2"></div>').appendTo(this.previewWrap);
 			this.previewWrap2.append(this.resizeHandle, this.previewHeader, this.preview);
 			setupResizeHandle(this.resizeHandle, this.editor, this.preview, true, this);
 			setupResizeHandle(this.resizeHandle, this.editorWrap, this.previewWrap, false, this);
-			
+
 			// Setup update:
 			this.debouncedUpdate = debounce(this.update, 350, this);
 			this.editor.on('keyup', $.proxy(this.debouncedUpdate, this));
-			
+
 			// Store datas needed by fullscreen mode:
 			this.fullscreenData = {};
-			
+
 			// Insert meltdown in the document:
 			this.editor.after(this.wrap).appendTo(this.editorDeco);
 			this._checkToolbarOverflowedControls();
-			
+
 			// Setup display state (preview open and _heightsManaged):
 			this._previewCollapses = _options.previewCollapses;
 			this.togglePreview(true, 0, true, !_options.openPreview);	// Do not update the preview if !_options.openPreview
@@ -521,21 +534,21 @@
 				this.preview.height("+=0");	// If !_previewCollapses, we cannot have a dynamic height.
 			}
 			this._checkHeightsManaged("", undefined, true);	// Set CSS height of wrap.
-			
+
 			// Define the wrap min height from the editor and the preview min heights:
 			var wrapHeight = this.wrap.height(),
 				minWrapHeights = parseFloat(this.editor.css("minHeight")) + parseFloat(this.preview.css("minHeight")),
 				editorHeight = this.editor.height();
 			previewHeight = this.preview.height();
 			this.wrap.css("minHeight", wrapHeight - editorHeight - previewHeight + minWrapHeights);
-			
+
 			// Setup editor and preview resizing when wrap is resized:
 			this.lastWrapWidth = this.wrap.width();
 			this.lastWrapHeight = wrapHeight;
 			this.lastEditorPercentWidth = 0.5;
 			this.lastEditorPercentHeight = editorHeight / (editorHeight + previewHeight);
 			addResizeListener(this.wrap[0], $.proxy(this._wrapResizeListener, this));
-			
+
 			// Now that all measures were made, we can close the preview if needed:
 			if (!_options.openPreview) {
 				this.togglePreview(false, 0);
@@ -545,7 +558,7 @@
 			if (_options.fullscreen) {
 				this.toggleFullscreen(_options.fullscreen);
 			}
-			
+
 			return this;	// Chaining
 		},
 		options: function(name, value) {
@@ -583,7 +596,7 @@
 			if (duration === undefined) {
 				duration = this._options.previewDuration;
 			}
-			
+
 			// Function to resize the editor when the preview is resized:
 			var self = this,
 				editorHeight = this.editor.height(),
@@ -603,7 +616,7 @@
 				unsetPreviewWrapDisplay = function() {
 					self.previewWrap.css("display", "");
 				};
-			
+
 			if (open) {
 				this.wrap.addClass("previewopen");
 				if (!noUpdate) {
@@ -669,7 +682,7 @@
 				}
 				this.wrap.removeClass("previewopen");
 			}
-			
+
 			return this;	// Chaining
 		},
 		isFullscreen: function() {
@@ -680,7 +693,7 @@
 			if (full === undefined) {
 				return this;	// Chaining
 			}
-			
+
 			var data = this.fullscreenData;
 			if (full) {
 				data.originalWrapHeight = this.wrap.height();
@@ -688,7 +701,7 @@
 				// Keep height in case it is "auto" or "" or whatever:
 				data.originalWrapStyleHeight = this.wrap[0].style.height;
 				this._checkHeightsManaged("fullscreen", true);
-				
+
 				this.wrap.addClass('fullscreen');
 				var self = this;
 				doc.on("keypress." + plgName + ".fullscreenEscKey", function(e) {
@@ -699,7 +712,7 @@
 			} else {
 				doc.off("keypress." + plgName + ".fullscreenEscKey");
 				this.wrap.removeClass('fullscreen');
-				
+
 				if (this._isHeightsManaged()) {
 					this._adjustHeights(data.originalWrapHeight);
 					this.lastWrapHeight = data.originalWrapHeight;
@@ -712,7 +725,7 @@
 				this.wrap[0].style.height = data.originalWrapStyleHeight;
 			}
 			this._wrapResizeListener();
-			
+
 			return this;	// Chaining
 		},
 		isSidebyside: function() {
@@ -723,7 +736,7 @@
 			if (sidebyside === undefined) {
 				return this;	// Chaining
 			}
-			
+
 			var isPreviewOpen = this.isPreviewOpen(),
 				originalBottommarginTop = this.bottommargin.offset().top;
 			if (sidebyside) {
@@ -740,7 +753,7 @@
 				}
 				var diffHeights = editorBottom - previewBottom;
 				this.preview.height("+=" + diffHeights);
-				
+
 				var deltaWrapHeight = originalBottommarginTop - this.bottommargin.offset().top;
 				this.editor.height("+=" + deltaWrapHeight);
 				this.preview.height("+=" + deltaWrapHeight);
@@ -755,7 +768,7 @@
 				this.editorWrap.css({width: "", maxWidth: ""});
 				this.previewWrap.css({width: "", maxWidth: ""});
 				this.wrap.removeClass("sidebyside");
-				
+
 				var deltaBottommarginTop = this.bottommargin.offset().top - originalBottommarginTop;
 				this.lastWrapHeight = originalWrapHeight + deltaBottommarginTop;
 				this._adjustHeights(originalWrapHeight);
@@ -764,7 +777,7 @@
 					this.togglePreview(false, 0, false, true);
 				}
 			}
-			
+
 			return this;	// Chaining
 		},
 		isPreviewCollapses: function() {
@@ -775,10 +788,10 @@
 			if (previewCollapses === undefined) {
 				return this;	// Chaining
 			}
-			
+
 			this._previewCollapses = previewCollapses;
 			this._checkHeightsManaged();
-			
+
 			return this;	// Chaining
 		},
 		_isHeightsManaged: function() {
@@ -789,14 +802,14 @@
 			if (manage === undefined) {
 				return this;	// Chaining
 			}
-			
+
 			if (manage) {
 				this.wrap.height("+=0").addClass("heightsManaged");
 			} else {
 				this.wrap.height("auto").removeClass("heightsManaged");
 			}
 			this._heightsManaged = manage;
-			
+
 			return this;	// Chaining
 		},
 		_checkHeightsManaged: function(change, value, force) {
@@ -851,7 +864,7 @@
 			}
 			this.editor.height(sizes.firstSize);
 			this.preview.height(sizes.lastSize);
-			
+
 			return this;	// Chaining
 		},
 		_adjustWidths: function(wrapWidth) {
@@ -865,7 +878,7 @@
 				this.editorWrap[0].style.maxWidth = sizes.firstSize + "px";
 				this.previewWrap[0].style.maxWidth = sizes.lastSize + "px";
 			}
-			
+
 			return this;	// Chaining
 		},
 		// Call this to manage controls that are overflowing the toolbar
@@ -875,7 +888,7 @@
 				control = $(controls[0]),
 				defaultTop = control.position().top,
 				foundOverflowed = false;
-			
+
 			// First we look for overflowed controls:
 			for (var i = controls.length - 1; i > 1; i--) {
 				control = $(controls[i]);
@@ -888,7 +901,7 @@
 				control.addClass("overflowedControl");
 				foundOverflowed = true;
 			}
-			
+
 			// If no new overflowed control was found,
 			// then look for controls that are no more overflowed:
 			if (!foundOverflowed) {
@@ -905,18 +918,18 @@
 					}
 				}
 			}
-			
+
 			return this;	// Chaining
 		}
 	});
-	
+
 	// THE $(...).meltdown() function:
 	// Inspired by: http://api.jqueryui.com/jQuery.widget/
 	$.fn.meltdown = function (arg) {
 		// Get method name and method arguments:
 		var methodName = $.type(arg) === "string" ? arg : "_init",
 			args = Array.prototype.slice.call(arguments, methodName === "_init" ? 0 : 1);
-		
+
 		// Dispatch method call:
 		for (var elem, meltdown, returnValue, i = 0; i < this.length; i++) {
 			elem = this[i];
@@ -935,11 +948,11 @@
 				return returnValue;
 			}
 		}
-		
+
 		return this;	// Chaining
 	};
-	
-	
+
+
 	if (isIE8||true) {
 		// Fixing the textarea deselection on click:
 		// (http://stackoverflow.com/questions/3558939/javascript-get-selected-text-from-textarea-in-ie8)
@@ -950,7 +963,7 @@
 			return ret;
 		};
 	}
-	
+
 	if (isOldjQuery) {
 		$.meltdown.controlDefs.sidebyside.styleClass = "disabled";
 		$.meltdown.controlDefs.sidebyside.altText = "Disabled: requires jQuery 1.8+";
@@ -959,5 +972,5 @@
 			return this;
 		};
 	}
-	
+
 }(jQuery, window, document));
