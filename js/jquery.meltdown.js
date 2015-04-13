@@ -23,7 +23,7 @@
 		var required = jqueryRequired[i],
 				current = parseInt(jqueryCurrent[i], 10);
 		if (required > current) {
-			isOldQuery = true;
+			isOldjQuery = true;
 			break;
 		} else if (current > required) {
 			break;
