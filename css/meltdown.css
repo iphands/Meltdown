@@ -23,6 +23,13 @@ user-select: none;
 	overflow: hidden;
 }
 
+/* Fix for conflict with Bootstrap 3 / normalize.css */
+.meltdown_wrap, .meltdown_wrap * {
+	-webkit-box-sizing: content-box;
+	-moz-box-sizing: content-box;
+	box-sizing: content-box;
+}
+
 /* Allow the margins to collapse with the other childrens of .meltdown_wrap: */
 .meltdown_topmargin {
 	margin-bottom: 5px;
